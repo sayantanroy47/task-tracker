@@ -2,6 +2,8 @@ package com.tasktracker.presentation.main
 
 import com.tasktracker.domain.model.Task
 import com.tasktracker.domain.repository.TaskRepository
+import com.tasktracker.presentation.speech.SpeechPermissionHandler
+import com.tasktracker.presentation.speech.SpeechRecognitionService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -24,6 +26,12 @@ class MainViewModelTest {
 
     @Mock
     private lateinit var taskRepository: TaskRepository
+    
+    @Mock
+    private lateinit var speechRecognitionService: SpeechRecognitionService
+    
+    @Mock
+    private lateinit var speechPermissionHandler: SpeechPermissionHandler
 
     private lateinit var viewModel: MainViewModel
     private val testDispatcher = StandardTestDispatcher()
@@ -35,8 +43,9 @@ class MainViewModelTest {
         
         // Mock repository to return empty list initially
         whenever(taskRepository.getActiveTasks()).thenReturn(flowOf(emptyList()))
+        whenever(taskRepository.getCompletedTasks()).thenReturn(flowOf(emptyList()))
         
-        viewModel = MainViewModel(taskRepository)
+        viewModel = MainViewModel(taskRepository, speechRecognitionService, speechPermissionHandler)
     }
 
     @After
@@ -140,7 +149,7 @@ class MainViewModelTest {
         whenever(taskRepository.getActiveTasks()).thenReturn(flowOf(tasks))
         
         // When
-        viewModel = MainViewModel(taskRepository) // Recreate to trigger init
+        viewModel = MainViewModel(taskRepository, speechRecognitionService, speechPermissionHandler) // Recreate to trigger init
         advanceUntilIdle()
         
         // Then

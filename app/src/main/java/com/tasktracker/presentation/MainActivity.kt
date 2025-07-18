@@ -11,10 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.tasktracker.presentation.main.MainScreen
+import com.tasktracker.presentation.navigation.TaskTrackerNavigation
 import com.tasktracker.presentation.notifications.NotificationPermissionHandler
 import com.tasktracker.presentation.notifications.NotificationService
 import com.tasktracker.presentation.speech.SpeechPermissionHandler
 import com.tasktracker.presentation.theme.TaskTrackerTheme
+import com.tasktracker.presentation.theme.GlassmorphismTheme
+import com.tasktracker.presentation.theme.rememberAdaptiveGlassmorphismConfig
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -36,13 +39,17 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             TaskTrackerTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                GlassmorphismTheme(
+                    config = rememberAdaptiveGlassmorphismConfig()
                 ) {
-                    MainScreen(
-                        highlightedTaskId = getHighlightedTaskId()
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        TaskTrackerNavigation(
+                            highlightedTaskId = getHighlightedTaskId()
+                        )
+                    }
                 }
             }
         }
@@ -76,11 +83,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainActivityPreview() {
     TaskTrackerTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            MainScreen()
+        GlassmorphismTheme {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                MainScreen()
+            }
         }
     }
 }

@@ -1,14 +1,18 @@
 package com.tasktracker.presentation.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
@@ -24,8 +28,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -40,6 +47,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tasktracker.domain.model.RecurrenceType
 import com.tasktracker.domain.model.Task
+import com.tasktracker.presentation.components.glassmorphism.GlassCard
+import com.tasktracker.presentation.theme.adaptiveGlassColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -92,15 +101,24 @@ fun TaskItemComponent(
 private fun SwipeBackground(
     dismissDirection: SwipeToDismissBoxValue
 ) {
-    val backgroundColor = when (dismissDirection) {
-        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primary
-        else -> Color.Transparent
+    val glassColors = adaptiveGlassColors()
+    
+    val backgroundBrush = when (dismissDirection) {
+        SwipeToDismissBoxValue.StartToEnd -> Brush.horizontalGradient(
+            colors = listOf(
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+            )
+        )
+        else -> Brush.horizontalGradient(
+            colors = listOf(Color.Transparent, Color.Transparent)
+        )
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(backgroundBrush, RoundedCornerShape(16.dp))
             .padding(horizontal = 20.dp),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -119,6 +137,8 @@ private fun SwipeBackground(
 private fun TaskCard(
     task: Task
 ) {
+    val glassColors = adaptiveGlassColors()
+    
     val taskDescription = buildString {
         append("Task: ${task.description}")
         if (task.hasReminder()) {
@@ -131,20 +151,17 @@ private fun TaskCard(
         append(", swipe right to complete")
     }
     
-    Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+    GlassCard(
         modifier = Modifier.semantics {
             contentDescription = taskDescription
             role = Role.Button
-        }
+        },
+        contentPadding = PaddingValues(16.dp),
+        transparency = 0.12f,
+        elevation = 4.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Task description
@@ -152,7 +169,7 @@ private fun TaskCard(
                 text = task.description,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = glassColors.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -167,7 +184,7 @@ private fun TaskCard(
                 Text(
                     text = formatCreatedTime(task.createdAt),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    color = glassColors.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier.weight(1f)
                 )
                 
@@ -228,17 +245,16 @@ private fun CompletedTaskCard(
     task: Task,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    val glassColors = adaptiveGlassColors()
+    
+    GlassCard(
         modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
-        )
+        contentPadding = PaddingValues(16.dp),
+        transparency = 0.08f,
+        elevation = 2.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Task description with strikethrough
@@ -246,7 +262,7 @@ private fun CompletedTaskCard(
                 text = task.description,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = glassColors.onSurface.copy(alpha = 0.6f),
                 textDecoration = TextDecoration.LineThrough,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis

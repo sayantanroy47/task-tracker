@@ -3,6 +3,7 @@ package com.tasktracker.di
 import android.content.Context
 import com.tasktracker.data.local.TaskDao
 import com.tasktracker.data.local.TaskDatabase
+import com.tasktracker.data.local.dao.AnalyticsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,5 +33,13 @@ object DatabaseModule {
     @Provides
     fun provideTaskDao(database: TaskDatabase): TaskDao {
         return database.taskDao()
+    }
+    
+    /**
+     * Provides the AnalyticsDao from the database.
+     */
+    @Provides
+    fun provideAnalyticsDao(database: TaskDatabase): AnalyticsDao {
+        return database.analyticsDao()
     }
 }

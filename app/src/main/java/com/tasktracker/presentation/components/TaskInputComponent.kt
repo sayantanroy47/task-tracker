@@ -1,15 +1,20 @@
 package com.tasktracker.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -35,16 +40,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tasktracker.domain.model.RecurrenceType
+import com.tasktracker.presentation.components.glassmorphism.GlassCard
+import com.tasktracker.presentation.components.glassmorphism.GlassTextField
+import com.tasktracker.presentation.components.glassmorphism.GlassButton
 import com.tasktracker.presentation.speech.SpeechRecognitionService
 import com.tasktracker.presentation.speech.SpeechRecognitionState
+import com.tasktracker.presentation.theme.adaptiveGlassColors
 import kotlinx.coroutines.delay
 
 @Composable
@@ -107,51 +119,49 @@ fun TaskInputComponent(
         }
     }
     
+    val glassColors = adaptiveGlassColors()
+    val hapticFeedback = LocalHapticFeedback.current
+    
+    // Animation for button press feedback
+    val buttonScale by animateFloatAsState(
+        targetValue = if (taskDescription.isNotBlank()) 1f else 0.95f,
+        animationSpec = tween(durationMillis = 150),
+        label = "button_scale"
+    )
+    
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Card(
+        GlassCard(
             modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+            contentPadding = PaddingValues(16.dp),
+            transparency = 0.15f,
+            elevation = 6.dp
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                GlassTextField(
                     value = taskDescription,
                     onValueChange = { taskDescription = it },
                     modifier = Modifier
                         .weight(1f)
                         .focusRequester(focusRequester),
-                    placeholder = {
-                        Text(
-                            text = "Add new task...",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    },
+                    placeholder = "Add new task...",
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
                             if (taskDescription.isNotBlank()) {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onCreateTask(taskDescription)
                             }
                         }
-                    ),
-                    singleLine = true,
-                    isError = inputError != null,
-                    supportingText = if (inputError != null) {
-                        { Text(text = inputError, color = MaterialTheme.colorScheme.error) }
-                    } else null
+                    )
                 )
                 
                 // Reminder time picker button
@@ -255,29 +265,28 @@ fun TaskInputComponent(
             enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
         ) {
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
+                contentPadding = PaddingValues(12.dp),
+                transparency = 0.2f,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = speechState.error ?: "",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f)
                     )
                     if (speechState.error?.contains("No speech input") == true || 
                         speechState.error?.contains("timeout") == true) {
                         IconButton(
                             onClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 speechRecognitionService?.clearError()
                                 speechRecognitionService?.startListening()
                             }
@@ -285,7 +294,7 @@ fun TaskInputComponent(
                             Icon(
                                 imageVector = Icons.Default.Mic,
                                 contentDescription = "Retry voice input",
-                                tint = MaterialTheme.colorScheme.onErrorContainer
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -299,28 +308,27 @@ fun TaskInputComponent(
             enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
         ) {
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
+                contentPadding = PaddingValues(12.dp),
+                transparency = 0.18f,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Mic,
                         contentDescription = "Listening",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(20.dp)
                     )
                     Text(
                         text = "Listening... Speak your task",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = glassColors.onSurface
                     )
                 }
             }
@@ -332,28 +340,27 @@ fun TaskInputComponent(
             enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
         ) {
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                contentPadding = PaddingValues(12.dp),
+                transparency = 0.18f,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Task created",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
                     Text(
                         text = "Task created successfully!",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = glassColors.onSurface
                     )
                 }
             }

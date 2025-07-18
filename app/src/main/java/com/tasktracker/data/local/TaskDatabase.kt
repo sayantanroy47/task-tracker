@@ -6,20 +6,40 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import android.content.Context
 import com.tasktracker.data.local.entity.TaskEntity
+import com.tasktracker.data.local.entity.DailyAnalyticsEntity
+import com.tasktracker.data.local.entity.ProductivityInsightEntity
+import com.tasktracker.data.local.entity.AchievementEntity
+import com.tasktracker.data.local.entity.FocusSessionEntity
+import com.tasktracker.data.local.entity.CategoryAnalyticsEntity
+import com.tasktracker.data.local.entity.ProductivityPatternEntity
+import com.tasktracker.data.local.entity.MoodCorrelationEntity
+import com.tasktracker.data.local.entity.StreakDataEntity
+import com.tasktracker.data.local.dao.AnalyticsDao
 
 /**
  * Room database for the Task Tracker application.
  * Provides local storage for tasks with offline-first functionality.
  */
 @Database(
-    entities = [TaskEntity::class],
-    version = 1,
+    entities = [
+        TaskEntity::class,
+        DailyAnalyticsEntity::class,
+        ProductivityInsightEntity::class,
+        AchievementEntity::class,
+        FocusSessionEntity::class,
+        CategoryAnalyticsEntity::class,
+        ProductivityPatternEntity::class,
+        MoodCorrelationEntity::class,
+        StreakDataEntity::class
+    ],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class TaskDatabase : RoomDatabase() {
     
     abstract fun taskDao(): TaskDao
+    abstract fun analyticsDao(): AnalyticsDao
     
     companion object {
         @Volatile
