@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Agent Failure Recovery",
+  "description": "Monitors for agent task failures and automatically prompts the agent to continue with the incomplete task",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The previous task appears to have failed or been incomplete. Please continue with the task and complete what was left unfinished. Analyze what went wrong and proceed to finish the work."
+  }
+}
