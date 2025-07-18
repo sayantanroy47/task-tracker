@@ -10,21 +10,60 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = TaskBlueDark,
+    onPrimary = Color.Black,
+    primaryContainer = TaskBlueVariantDark,
+    onPrimaryContainer = Color.Black,
+    secondary = TaskGreenDark,
+    onSecondary = Color.Black,
+    secondaryContainer = TaskGreenVariantDark,
+    onSecondaryContainer = Color.Black,
+    tertiary = TaskOrangeDark,
+    onTertiary = Color.Black,
+    background = BackgroundDark,
+    onBackground = Color.White,
+    surface = SurfaceDark,
+    onSurface = Color.White,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = TaskGrayDark,
+    error = ErrorDark,
+    onError = OnErrorDark,
+    errorContainer = TaskRedDark,
+    onErrorContainer = Color.Black,
+    outline = TaskGrayDark,
+    outlineVariant = TaskDarkGrayDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = TaskBlue,
+    onPrimary = Color.White,
+    primaryContainer = TaskBlueVariant,
+    onPrimaryContainer = Color.White,
+    secondary = TaskGreen,
+    onSecondary = Color.White,
+    secondaryContainer = TaskGreenVariant,
+    onSecondaryContainer = Color.White,
+    tertiary = TaskOrange,
+    onTertiary = Color.White,
+    background = BackgroundLight,
+    onBackground = Color.Black,
+    surface = SurfaceLight,
+    onSurface = Color.Black,
+    surfaceVariant = SurfaceVariantLight,
+    onSurfaceVariant = TaskGray,
+    error = ErrorLight,
+    onError = OnErrorLight,
+    errorContainer = TaskRed,
+    onErrorContainer = Color.White,
+    outline = TaskGray,
+    outlineVariant = TaskLightGray
 )
 
 @Composable

@@ -52,11 +52,20 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun insertTask(task: Task) {
-        taskDao.insertTask(task.toEntity())
-        
-        // Schedule reminder notification if task has a reminder time
-        if (task.hasReminder()) {
-            notificationService.scheduleTaskReminder(task)
+        try {
+            taskDao.insertTask(task.toEntity())
+            
+            // Schedule reminder notification if task has a reminder time
+            if (task.hasReminder()) {
+                try {
+                    notificationService.scheduleTaskReminder(task)
+                } catch (e: Exception) {
+                    // Log notification scheduling error but don't fail task creation
+                    // The task is still created successfully even if notification fails
+                }
+            }
+        } catch (e: Exception) {
+            throw TaskStorageException("Failed to create task: ${e.message}", e)
         }
     }
 
@@ -65,13 +74,21 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateTask(task: Task) {
-        taskDao.updateTask(task.toEntity())
-        
-        // Update notification scheduling based on task changes
-        if (task.hasReminder() && !task.isCompleted) {
-            notificationService.scheduleTaskReminder(task)
-        } else {
-            notificationService.cancelTaskReminder(task.id)
+        try {
+            taskDao.updateTask(task.toEntity())
+            
+            // Update notification scheduling based on task changes
+            if (task.hasReminder() && !task.isCompleted) {
+                try {
+                    notificationService.scheduleTaskReminder(task)
+                } catch (e: Exception) {
+                    // Log notification scheduling error but don't fail task update
+                }
+            } else {
+                notificationService.cancelTaskReminder(task.id)
+            }
+        } catch (e: Exception) {
+            throw TaskStorageException("Failed to update task: ${e.message}", e)
         }
     }
 

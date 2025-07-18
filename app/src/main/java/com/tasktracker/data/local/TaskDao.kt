@@ -1,5 +1,6 @@
 package com.tasktracker.data.local
 
+import androidx.paging.PagingSource
 import androidx.room.*
 import com.tasktracker.data.local.entity.TaskEntity
 import kotlinx.coroutines.flow.Flow
@@ -7,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Data Access Object for Task operations in Room database.
  * Provides reactive data streams using Flow for UI updates.
+ * Optimized for performance with proper indexing and pagination support.
  */
 @Dao
 interface TaskDao {
@@ -106,4 +108,54 @@ interface TaskDao {
      */
     @Query("SELECT * FROM tasks WHERE description LIKE '%' || :searchQuery || '%' ORDER BY created_at DESC")
     fun searchTasks(searchQuery: String): Flow<List<TaskEntity>>
+    
+    // Performance-optimized queries for large datasets
+    
+    /**
+     * Get active tasks with pagination support for large lists.
+     */
+    @Query("SELECT * FROM tasks WHERE is_completed = 0 ORDER BY created_at DESC")
+    fun getActiveTasksPaged(): PagingSource<Int, TaskEntity>
+    
+    /**
+     * Get completed tasks with pagination support.
+     */
+    @Query("SELECT * FROM tasks WHERE is_completed = 1 ORDER BY completed_at DESC")
+    fun getCompletedTasksPaged(): PagingSource<Int, TaskEntity>
+    
+    /**
+     * Get active tasks with limit for performance (used for quick previews).
+     */
+    @Query("SELECT * FROM tasks WHERE is_completed = 0 ORDER BY created_at DESC LIMIT :limit")
+    suspend fun getActiveTasksLimited(limit: Int = 50): List<TaskEntity>
+    
+    /**
+     * Get completed tasks with limit for performance.
+     */
+    @Query("SELECT * FROM tasks WHERE is_completed = 1 ORDER BY completed_at DESC LIMIT :limit")
+    suspend fun getCompletedTasksLimited(limit: Int = 50): List<TaskEntity>
+    
+    /**
+     * Get tasks due for reminders in the next hour (optimized for notification worker).
+     */
+    @Query("""
+        SELECT * FROM tasks 
+        WHERE is_completed = 0 
+        AND reminder_time IS NOT NULL 
+        AND reminder_time BETWEEN :startTime AND :endTime
+        ORDER BY reminder_time ASC
+    """)
+    suspend fun getTasksDueForReminders(startTime: Long, endTime: Long): List<TaskEntity>
+    
+    /**
+     * Bulk update task completion status (for performance).
+     */
+    @Query("UPDATE tasks SET is_completed = :isCompleted, completed_at = :completedAt WHERE id IN (:taskIds)")
+    suspend fun bulkUpdateTaskCompletion(taskIds: List<String>, isCompleted: Boolean, completedAt: Long?)
+    
+    /**
+     * Delete old completed tasks (cleanup operation).
+     */
+    @Query("DELETE FROM tasks WHERE is_completed = 1 AND completed_at < :cutoffTime")
+    suspend fun deleteOldCompletedTasks(cutoffTime: Long): Int
 }

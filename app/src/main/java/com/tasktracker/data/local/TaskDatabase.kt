@@ -35,6 +35,15 @@ abstract class TaskDatabase : RoomDatabase() {
                     DATABASE_NAME
                 )
                 .fallbackToDestructiveMigration() // For development - remove in production
+                // Performance optimizations
+                .setQueryCallback(
+                    { sqlQuery, bindArgs ->
+                        android.util.Log.d("RoomQuery", "SQL Query: $sqlQuery")
+                    },
+                    java.util.concurrent.Executors.newSingleThreadExecutor()
+                )
+                .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING) // Better concurrency
+                .enableMultiInstanceInvalidation() // For multi-process apps
                 .build()
                 INSTANCE = instance
                 instance

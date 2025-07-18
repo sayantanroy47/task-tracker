@@ -156,4 +156,102 @@ class TaskTest {
         assertNotNull(nextTask)
         assertNull(nextTask!!.reminderTime)
     }
+
+    @Test
+    fun `createNextRecurrence handles month-end edge case for leap year`() {
+        // January 31st should become February 29th in leap year (2024)
+        val calendar = java.util.Calendar.getInstance().apply {
+            set(2024, java.util.Calendar.JANUARY, 31, 10, 30, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val reminderTime = calendar.timeInMillis
+        
+        val task = Task(
+            description = "Monthly task",
+            recurrenceType = RecurrenceType.MONTHLY,
+            reminderTime = reminderTime
+        )
+        val nextTask = task.createNextRecurrence()
+        
+        assertNotNull(nextTask)
+        
+        val nextCalendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = nextTask!!.reminderTime!!
+        }
+        
+        // Should be February 29th (2024 is a leap year)
+        assertEquals(java.util.Calendar.FEBRUARY, nextCalendar.get(java.util.Calendar.MONTH))
+        assertEquals(29, nextCalendar.get(java.util.Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `createNextRecurrence handles month-end edge case for non-leap year`() {
+        // January 31st should become February 28th in non-leap year (2023)
+        val calendar = java.util.Calendar.getInstance().apply {
+            set(2023, java.util.Calendar.JANUARY, 31, 10, 30, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val reminderTime = calendar.timeInMillis
+        
+        val task = Task(
+            description = "Monthly task",
+            recurrenceType = RecurrenceType.MONTHLY,
+            reminderTime = reminderTime
+        )
+        val nextTask = task.createNextRecurrence()
+        
+        assertNotNull(nextTask)
+        
+        val nextCalendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = nextTask!!.reminderTime!!
+        }
+        
+        // Should be February 28th (2023 is not a leap year)
+        assertEquals(java.util.Calendar.FEBRUARY, nextCalendar.get(java.util.Calendar.MONTH))
+        assertEquals(28, nextCalendar.get(java.util.Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `createNextRecurrence handles custom recurrence interval`() {
+        val reminderTime = System.currentTimeMillis() + 60000
+        val task = Task(
+            description = "Every 3 days task",
+            recurrenceType = RecurrenceType.DAILY,
+            recurrenceInterval = 3,
+            reminderTime = reminderTime
+        )
+        
+        val nextTask = task.createNextRecurrence()
+        
+        assertNotNull(nextTask)
+        assertEquals(3, nextTask!!.recurrenceInterval)
+        
+        // Should be 3 days later (approximately)
+        val timeDifference = nextTask.reminderTime!! - task.reminderTime!!
+        val expectedDifference = 3 * 24 * 60 * 60 * 1000L // 3 days in milliseconds
+        assertTrue("Time difference should be approximately 3 days", 
+            kotlin.math.abs(timeDifference - expectedDifference) < 1000) // Allow 1 second tolerance
+    }
+
+    @Test
+    fun `createNextRecurrence preserves all task properties except completion status`() {
+        val task = Task(
+            description = "Complex recurring task",
+            recurrenceType = RecurrenceType.WEEKLY,
+            recurrenceInterval = 2,
+            reminderTime = System.currentTimeMillis() + 60000
+        )
+        
+        val nextTask = task.createNextRecurrence()
+        
+        assertNotNull(nextTask)
+        assertNotEquals(task.id, nextTask!!.id) // Should have new ID
+        assertEquals(task.description, nextTask.description)
+        assertEquals(task.recurrenceType, nextTask.recurrenceType)
+        assertEquals(task.recurrenceInterval, nextTask.recurrenceInterval)
+        assertFalse(nextTask.isCompleted) // Should not be completed
+        assertNull(nextTask.completedAt) // Should not have completion time
+        assertTrue(nextTask.createdAt > task.createdAt) // Should have newer creation time
+        assertTrue(nextTask.reminderTime!! > task.reminderTime!!) // Should have future reminder
+    }
 }

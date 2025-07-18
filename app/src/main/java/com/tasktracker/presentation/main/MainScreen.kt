@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tasktracker.presentation.components.CompletedTasksSection
 import com.tasktracker.presentation.components.TaskInputComponent
 import com.tasktracker.presentation.components.TaskListComponent
 import com.tasktracker.presentation.components.UndoSnackbar
@@ -83,6 +84,7 @@ fun MainScreen(
                 TaskInputComponent(
                     onCreateTask = viewModel::createTask,
                     onCreateTaskWithReminder = viewModel::createTaskWithReminder,
+                    onCreateTaskWithRecurrence = viewModel::createTaskWithRecurrence,
                     inputError = uiState.inputError,
                     showTaskCreatedFeedback = uiState.showTaskCreatedFeedback,
                     onClearInputError = viewModel::clearInputError,
@@ -96,6 +98,14 @@ fun MainScreen(
                     tasks = uiState.activeTasks,
                     isLoading = uiState.isLoading,
                     onTaskComplete = viewModel::completeTask
+                )
+                
+                // Completed tasks section
+                CompletedTasksSection(
+                    completedTasks = uiState.completedTasks,
+                    isLoading = uiState.isLoadingCompleted,
+                    onDeleteCompletedTask = viewModel::deleteCompletedTask,
+                    onClearAllCompleted = viewModel::clearAllCompletedTasks
                 )
             }
             

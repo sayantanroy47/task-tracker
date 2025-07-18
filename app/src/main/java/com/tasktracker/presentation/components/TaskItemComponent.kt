@@ -29,6 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -115,11 +119,27 @@ private fun SwipeBackground(
 private fun TaskCard(
     task: Task
 ) {
+    val taskDescription = buildString {
+        append("Task: ${task.description}")
+        if (task.hasReminder()) {
+            append(", has reminder")
+        }
+        if (task.isRecurring()) {
+            append(", recurring ${formatRecurrenceType(task.recurrenceType).lowercase()}")
+        }
+        append(", created ${formatCreatedTime(task.createdAt)}")
+        append(", swipe right to complete")
+    }
+    
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )
+        ),
+        modifier = Modifier.semantics {
+            contentDescription = taskDescription
+            role = Role.Button
+        }
     ) {
         Column(
             modifier = Modifier

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.tasktracker.domain.model.RecurrenceType
 import com.tasktracker.presentation.speech.SpeechRecognitionService
 import com.tasktracker.presentation.speech.SpeechRecognitionState
 import kotlinx.coroutines.delay
@@ -49,6 +51,7 @@ import kotlinx.coroutines.delay
 fun TaskInputComponent(
     onCreateTask: (String) -> Unit = {},
     onCreateTaskWithReminder: (String, Long?) -> Unit = { _, _ -> },
+    onCreateTaskWithRecurrence: (String, Long?, RecurrenceType?) -> Unit = { _, _, _ -> },
     inputError: String? = null,
     showTaskCreatedFeedback: Boolean = false,
     onClearInputError: () -> Unit = {},
@@ -59,7 +62,9 @@ fun TaskInputComponent(
 ) {
     var taskDescription by remember { mutableStateOf("") }
     var reminderTime by remember { mutableStateOf<Long?>(null) }
+    var recurrenceType by remember { mutableStateOf<RecurrenceType?>(null) }
     var showReminderPicker by remember { mutableStateOf(false) }
+    var showRecurrencePicker by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     
@@ -164,6 +169,21 @@ fun TaskInputComponent(
                     )
                 }
                 
+                // Recurrence picker button
+                IconButton(
+                    onClick = { showRecurrencePicker = true }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Repeat,
+                        contentDescription = "Set recurrence",
+                        tint = if (recurrenceType != null) {
+                            MaterialTheme.colorScheme.secondary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        }
+                    )
+                }
+                
                 // Microphone button for voice input
                 if (speechRecognitionService != null) {
                     IconButton(
@@ -191,8 +211,8 @@ fun TaskInputComponent(
                 IconButton(
                     onClick = {
                         if (taskDescription.isNotBlank()) {
-                            if (reminderTime != null) {
-                                onCreateTaskWithReminder(taskDescription, reminderTime)
+                            if (reminderTime != null || recurrenceType != null) {
+                                onCreateTaskWithRecurrence(taskDescription, reminderTime, recurrenceType)
                             } else {
                                 onCreateTask(taskDescription)
                             }
@@ -218,6 +238,14 @@ fun TaskInputComponent(
             ReminderTimeDisplay(
                 reminderTime = time,
                 onClearReminder = { reminderTime = null }
+            )
+        }
+        
+        // Recurrence display
+        recurrenceType?.let { type ->
+            RecurrenceDisplay(
+                recurrenceType = type,
+                onClearRecurrence = { recurrenceType = null }
             )
         }
         
@@ -340,6 +368,18 @@ fun TaskInputComponent(
                 showReminderPicker = false
             },
             onDismiss = { showReminderPicker = false }
+        )
+    }
+    
+    // Recurrence picker dialog
+    if (showRecurrencePicker) {
+        RecurrencePicker(
+            currentRecurrence = recurrenceType,
+            onRecurrenceSelected = { selectedRecurrence ->
+                recurrenceType = selectedRecurrence
+                showRecurrencePicker = false
+            },
+            onDismiss = { showRecurrencePicker = false }
         )
     }
 }

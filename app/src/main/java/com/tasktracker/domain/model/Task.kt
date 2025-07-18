@@ -63,14 +63,7 @@ data class Task(
         if (!isRecurring() || recurrenceType == null) return null
         
         val nextReminderTime = reminderTime?.let { currentReminder ->
-            when (recurrenceType) {
-                RecurrenceType.DAILY -> currentReminder + (24 * 60 * 60 * 1000L * recurrenceInterval)
-                RecurrenceType.WEEKLY -> currentReminder + (7 * 24 * 60 * 60 * 1000L * recurrenceInterval)
-                RecurrenceType.MONTHLY -> {
-                    // Approximate monthly recurrence (30 days)
-                    currentReminder + (30 * 24 * 60 * 60 * 1000L * recurrenceInterval)
-                }
-            }
+            calculateNextReminderTime(currentReminder, recurrenceType, recurrenceInterval)
         }
         
         return copy(
@@ -80,5 +73,42 @@ data class Task(
             reminderTime = nextReminderTime,
             completedAt = null
         )
+    }
+    
+    /**
+     * Calculates the next reminder time based on recurrence pattern.
+     * Handles edge cases like month-end dates for monthly recurrence.
+     */
+    private fun calculateNextReminderTime(
+        currentTime: Long,
+        recurrenceType: RecurrenceType,
+        interval: Int
+    ): Long {
+        val calendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = currentTime
+        }
+        
+        when (recurrenceType) {
+            RecurrenceType.DAILY -> {
+                calendar.add(java.util.Calendar.DAY_OF_MONTH, interval)
+            }
+            RecurrenceType.WEEKLY -> {
+                calendar.add(java.util.Calendar.WEEK_OF_YEAR, interval)
+            }
+            RecurrenceType.MONTHLY -> {
+                val originalDay = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+                calendar.add(java.util.Calendar.MONTH, interval)
+                
+                // Handle month-end edge cases (e.g., Jan 31 -> Feb 28/29)
+                val maxDayInNewMonth = calendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
+                if (originalDay > maxDayInNewMonth) {
+                    calendar.set(java.util.Calendar.DAY_OF_MONTH, maxDayInNewMonth)
+                } else {
+                    calendar.set(java.util.Calendar.DAY_OF_MONTH, originalDay)
+                }
+            }
+        }
+        
+        return calendar.timeInMillis
     }
 }

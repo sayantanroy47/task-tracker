@@ -81,7 +81,12 @@ dependencies {
     // Room database
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation("androidx.room:room-paging:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
+    
+    // Paging for large datasets
+    implementation("androidx.paging:paging-runtime:3.2.1")
+    implementation("androidx.paging:paging-compose:3.2.1")
     
     // Hilt dependency injection
     implementation("com.google.dagger:hilt-android:2.48.1")
@@ -95,6 +100,14 @@ dependencies {
     
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    
+    // Performance monitoring and profiling
+    implementation("androidx.benchmark:benchmark-macro-junit4:1.2.2")
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
+    implementation("androidx.tracing:tracing:1.2.0")
+    
+    // Memory leak detection (debug only)
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
     
     // Testing dependencies
     testImplementation("junit:junit:4.13.2")
