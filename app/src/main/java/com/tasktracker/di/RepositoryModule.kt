@@ -1,11 +1,26 @@
 package com.tasktracker.di
 
+import com.tasktracker.data.repository.TaskRepositoryImpl
+import com.tasktracker.domain.repository.TaskRepository
+import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
+/**
+ * Hilt module for providing repository dependencies.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-    // Repository dependency injection will be implemented in task 2.3
+    
+    /**
+     * Binds the TaskRepositoryImpl to the TaskRepository interface.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindTaskRepository(
+        taskRepositoryImpl: TaskRepositoryImpl
+    ): TaskRepository
 }
