@@ -48,6 +48,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tasktracker.domain.model.RecurrenceType
@@ -59,6 +60,7 @@ import com.tasktracker.presentation.speech.SpeechRecognitionState
 import com.tasktracker.presentation.theme.adaptiveGlassColors
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TaskInputComponent(
     onCreateTask: (String) -> Unit = {},

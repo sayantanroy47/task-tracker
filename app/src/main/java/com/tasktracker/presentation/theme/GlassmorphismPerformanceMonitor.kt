@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 /**
@@ -147,8 +148,3 @@ fun rememberAdaptiveGlassmorphismConfig(): GlassmorphismConfig {
     return config
 }
 
-/**
- * Extension function to convert Float to Dp
- */
-private val Float.dp: androidx.compose.ui.unit.Dp
-    get() = androidx.compose.ui.unit.dp(this)

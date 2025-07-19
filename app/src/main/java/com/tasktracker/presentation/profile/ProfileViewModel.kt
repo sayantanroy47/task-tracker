@@ -351,7 +351,7 @@ class ProfileViewModel @Inject constructor(
                 // Convert recommendations to insights
                 val recommendationInsights = recommendations.map { recommendation ->
                     PersonalInsight(
-                        type = com.tasktracker.domain.model.PersonalInsightType.PRODUCTIVITY_DECLINE,
+                        type = com.tasktracker.domain.model.PersonalInsightType.MOTIVATION_BOOST,
                         title = "Smart Recommendation",
                         description = recommendation,
                         recommendation = "Try this optimization",
@@ -383,6 +383,10 @@ class ProfileViewModel @Inject constructor(
      */
     fun refreshProfile() {
         loadProfileData()
+    }
+    
+    companion object {
+        private const val PRODUCTIVITY_DECLINE = "Try setting specific goals for each day to stay motivated."
     }
 }
 

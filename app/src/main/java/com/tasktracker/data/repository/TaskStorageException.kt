@@ -4,10 +4,10 @@ package com.tasktracker.data.repository
  * Exception thrown when there are issues with task storage operations.
  * This includes database errors, storage full conditions, and data corruption.
  */
-class TaskStorageException(
+open class TaskStorageException(
     message: String,
     cause: Throwable? = null
-) : Exception(message, cause)
+) : RuntimeException(message, cause)
 
 /**
  * Exception thrown when the device storage is full or nearly full.

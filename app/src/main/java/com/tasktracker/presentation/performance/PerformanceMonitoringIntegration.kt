@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import com.tasktracker.presentation.theme.GlassmorphismConfig
 import com.tasktracker.presentation.theme.LocalGlassmorphismConfig
 import kotlinx.coroutines.delay
@@ -77,7 +78,7 @@ fun PerformanceAwareGlassmorphismConfig(
  * Extension function to convert Float to Dp
  */
 private val Float.dp: androidx.compose.ui.unit.Dp
-    get() = androidx.compose.ui.unit.dp(this)
+    get() = androidx.compose.ui.unit.Dp(this)
 
 /**
  * Performance monitoring for analytics calculations

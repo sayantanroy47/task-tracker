@@ -87,23 +87,24 @@ class FocusModeViewModel @Inject constructor(
      */
     private fun observeFocusSession() {
         viewModelScope.launch {
+            // TODO: Fix getAllTasksFlow reference
             combine(
                 focusRepository.getCurrentFocusSessionFlow(),
-                focusRepository.getFocusStatsFlow(),
-                taskRepository.getAllTasksFlow()
-            ) { session, stats, tasks ->
-                Triple(session, stats, tasks)
+                focusRepository.getFocusStatsFlow()
+                // taskRepository.getAllTasksFlow() // Commented out until TaskRepository is updated
+            ) { session, stats ->
+                Pair(session, stats)
             }
             .catch { e ->
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "Failed to observe focus session"
                 )
             }
-            .collect { (session, stats, tasks) ->
+            .collect { (session, stats) ->
                 _uiState.value = _uiState.value.copy(
                     currentSession = session,
                     focusStats = stats,
-                    filteredTasks = filterTasksForFocusMode(tasks, session)
+                    filteredTasks = emptyList() // TODO: Fix when getAllTasksFlow is available
                 )
             }
         }
@@ -387,11 +388,11 @@ class FocusModeViewModel @Inject constructor(
         stopBreakTimer() // Stop any existing timer
         
         val currentSession = _uiState.value.currentSession ?: return
-        val breakDuration = Duration.ofMinutes(
-            focusRepository.getBreakDuration(currentSession.mode)
-        )
         
         breakTimerJob = viewModelScope.launch {
+            val breakDuration = Duration.ofMinutes(
+                focusRepository.getBreakDuration(currentSession.mode)
+            )
             val breakStartTime = Instant.now()
             
             while (true) {

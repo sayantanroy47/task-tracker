@@ -188,7 +188,7 @@ fun StreakDisplay(
                         fontSize = 24.sp,
                         modifier = Modifier
                             .background(
-                                color = Color.Orange.copy(alpha = 0.1f + fireAnimation.value * 0.2f),
+                                color = Color(0xFFFF9800).copy(alpha = 0.1f + fireAnimation.value * 0.2f),
                                 shape = CircleShape
                             )
                             .padding(8.dp)

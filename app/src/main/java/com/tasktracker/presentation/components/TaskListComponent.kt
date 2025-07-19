@@ -39,21 +39,20 @@ fun TaskListComponent(
     onTaskComplete: (Task) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    PerformanceMonitor.monitorComposition("TaskListComponent") {
-        // Performance optimization: Remember list state to maintain scroll position
-        val listState = rememberLazyListState()
-        
-        // Performance optimization: Derive state to prevent unnecessary recompositions
-        val isEmpty by remember(tasks) { derivedStateOf { tasks.isEmpty() } }
-        
-        // Performance optimization: Log memory usage for large lists
-        LaunchedEffect(tasks.size) {
-            if (tasks.size > 100) {
-                PerformanceMonitor.logMemoryUsage("TaskList with ${tasks.size} items")
-            }
+    // Performance optimization: Remember list state to maintain scroll position
+    val listState = rememberLazyListState()
+    
+    // Performance optimization: Derive state to prevent unnecessary recompositions
+    val isEmpty by remember(tasks) { derivedStateOf { tasks.isEmpty() } }
+    
+    // Performance optimization: Log memory usage for large lists
+    LaunchedEffect(tasks.size) {
+        if (tasks.size > 100) {
+            PerformanceMonitor.logMemoryUsage("TaskList with ${tasks.size} items")
         }
-        
-        when {
+    }
+    
+    when {
             isLoading -> {
                 Box(
                     modifier = modifier.fillMaxSize(),
@@ -83,7 +82,7 @@ fun TaskListComponent(
                     ) { task ->
                         // Performance optimization: Stable callback to prevent recomposition
                         val stableOnComplete = remember(task.id) {
-                            { onTaskComplete(task) }
+                            { _: Task -> onTaskComplete(task) }
                         }
                         
                         TaskItemComponent(
@@ -97,7 +96,6 @@ fun TaskListComponent(
                 }
             }
         }
-    }
 }
 
 @Composable

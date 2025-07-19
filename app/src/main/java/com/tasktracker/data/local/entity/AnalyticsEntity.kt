@@ -1,5 +1,6 @@
 package com.tasktracker.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.LocalDate
@@ -93,12 +94,19 @@ data class CategoryAnalyticsEntity(
 data class ProductivityPatternEntity(
     @PrimaryKey
     val id: String, // Composite key: "hour_day" format
+    @ColumnInfo(name = "hour_of_day")
     val hourOfDay: Int,
+    @ColumnInfo(name = "day_of_week")
     val dayOfWeek: Int,
+    @ColumnInfo(name = "completion_rate")
     val completionRate: Float,
+    @ColumnInfo(name = "average_tasks_completed")
     val averageTasksCompleted: Float,
+    @ColumnInfo(name = "focus_quality")
     val focusQuality: Float,
+    @ColumnInfo(name = "sample_size")
     val sampleSize: Int, // Number of data points used
+    @ColumnInfo(name = "last_updated")
     val lastUpdated: Long
 )
 

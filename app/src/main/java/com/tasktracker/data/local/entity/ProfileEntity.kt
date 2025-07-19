@@ -170,10 +170,10 @@ data class PreferencesHistoryEntity(
 )
 
 /**
- * Entity for storing productivity patterns
+ * Entity for storing profile productivity patterns
  */
-@Entity(tableName = "productivity_patterns")
-data class ProductivityPatternEntity(
+@Entity(tableName = "profile_productivity_patterns")
+data class ProfileProductivityPatternEntity(
     @PrimaryKey
     val patternId: String,
     val patternType: String, // "daily", "weekly", "monthly", "seasonal"

@@ -3,7 +3,6 @@ package com.tasktracker.data.local
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import android.content.Context
 import com.tasktracker.data.local.entity.TaskEntity
 import com.tasktracker.data.local.entity.DailyAnalyticsEntity
@@ -14,7 +13,11 @@ import com.tasktracker.data.local.entity.CategoryAnalyticsEntity
 import com.tasktracker.data.local.entity.ProductivityPatternEntity
 import com.tasktracker.data.local.entity.MoodCorrelationEntity
 import com.tasktracker.data.local.entity.StreakDataEntity
+import com.tasktracker.data.local.entity.ProfileProductivityPatternEntity
+import com.tasktracker.data.local.entity.UserProfileEntity
 import com.tasktracker.data.local.dao.AnalyticsDao
+import com.tasktracker.data.local.dao.ProfileDao
+import com.tasktracker.data.local.dao.TaskDao
 
 /**
  * Room database for the Task Tracker application.
@@ -30,16 +33,18 @@ import com.tasktracker.data.local.dao.AnalyticsDao
         CategoryAnalyticsEntity::class,
         ProductivityPatternEntity::class,
         MoodCorrelationEntity::class,
-        StreakDataEntity::class
+        StreakDataEntity::class,
+        ProfileProductivityPatternEntity::class,
+        UserProfileEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
-@TypeConverters(Converters::class)
 abstract class TaskDatabase : RoomDatabase() {
     
     abstract fun taskDao(): TaskDao
     abstract fun analyticsDao(): AnalyticsDao
+    abstract fun profileDao(): ProfileDao
     
     companion object {
         @Volatile
@@ -72,10 +77,3 @@ abstract class TaskDatabase : RoomDatabase() {
     }
 }
 
-/**
- * Type converters for Room database.
- * Currently not needed but prepared for future complex types.
- */
-class Converters {
-    // Add type converters here if needed for complex data types
-}

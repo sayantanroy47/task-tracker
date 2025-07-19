@@ -120,12 +120,12 @@ data class UserStatistics(
         val consistencyWeight = 0.25f
         val streakWeight = 0.2f
         val focusWeight = 0.15f
-        val procrastinationPenalty = 0.1f
+        val procrastinationWeight = 0.1f
         
         val completionScore = averageCompletionRate
         val streakScore = minOf(currentStreak / 30f, 1f) // Max score at 30-day streak
         val focusScore = minOf(totalFocusTime.toHours() / 100f, 1f) // Max score at 100 hours
-        val procrastinationPenalty = procrastinationScore * procrastinationPenalty
+        val procrastinationPenalty = procrastinationScore * procrastinationWeight
         
         return (completionScore * completionWeight +
                 consistencyScore * consistencyWeight +

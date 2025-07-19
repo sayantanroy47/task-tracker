@@ -1,6 +1,6 @@
 package com.tasktracker.data.repository
 
-import com.tasktracker.data.local.TaskDao
+import com.tasktracker.data.local.dao.TaskDao
 import com.tasktracker.data.local.entity.toDomainModel
 import com.tasktracker.data.local.entity.toEntity
 import com.tasktracker.domain.model.Task
@@ -22,20 +22,22 @@ class TaskRepositoryImpl @Inject constructor(
 ) : TaskRepository {
 
     override fun getAllTasks(): Flow<List<Task>> {
-        return taskDao.getAllTasks().map { entities ->
+        return taskDao.getAllTasksFlow().map { entities ->
             entities.map { it.toDomainModel() }
         }
     }
 
     override fun getActiveTasks(): Flow<List<Task>> {
-        return taskDao.getActiveTasks().map { entities ->
-            entities.map { it.toDomainModel() }
+        // TODO: Add getActiveTasksFlow to TaskDao
+        return taskDao.getAllTasksFlow().map { entities ->
+            entities.filter { !it.isCompleted }.map { it.toDomainModel() }
         }
     }
 
     override fun getCompletedTasks(): Flow<List<Task>> {
-        return taskDao.getCompletedTasks().map { entities ->
-            entities.map { it.toDomainModel() }
+        // TODO: Add getCompletedTasksFlow to TaskDao
+        return taskDao.getAllTasksFlow().map { entities ->
+            entities.filter { it.isCompleted }.map { it.toDomainModel() }
         }
     }
 
@@ -44,11 +46,13 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getTasksWithReminders(): List<Task> {
-        return taskDao.getTasksWithReminders().map { it.toDomainModel() }
+        // TODO: Add getTasksWithReminders to TaskDao
+        return taskDao.getAllTasks().filter { it.reminderTime != null }.map { it.toDomainModel() }
     }
 
     override suspend fun getRecurringTasks(): List<Task> {
-        return taskDao.getRecurringTasks().map { it.toDomainModel() }
+        // TODO: Add getRecurringTasks to TaskDao
+        return taskDao.getAllTasks().filter { it.recurrenceType != null }.map { it.toDomainModel() }
     }
 
     override suspend fun insertTask(task: Task) {
@@ -70,7 +74,10 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun insertTasks(tasks: List<Task>) {
-        taskDao.insertTasks(tasks.map { it.toEntity() })
+        // TODO: Add insertTasks to TaskDao - for now insert one by one
+        tasks.forEach { task ->
+            taskDao.insertTask(task.toEntity())
+        }
     }
 
     override suspend fun updateTask(task: Task) {
@@ -124,7 +131,11 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteAllCompletedTasks() {
-        taskDao.deleteAllCompletedTasks()
+        // TODO: Add deleteAllCompletedTasks to TaskDao
+        val completedTasks = taskDao.getAllTasks().filter { it.isCompleted }
+        completedTasks.forEach { task ->
+            taskDao.deleteTask(task)
+        }
     }
 
     override suspend fun getActiveTaskCount(): Int {
@@ -136,8 +147,10 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override fun searchTasks(searchQuery: String): Flow<List<Task>> {
-        return taskDao.searchTasks(searchQuery).map { entities ->
-            entities.map { it.toDomainModel() }
+        // TODO: Add searchTasks to TaskDao
+        return taskDao.getAllTasksFlow().map { entities ->
+            entities.filter { it.description.contains(searchQuery, ignoreCase = true) }
+                .map { it.toDomainModel() }
         }
     }
 }

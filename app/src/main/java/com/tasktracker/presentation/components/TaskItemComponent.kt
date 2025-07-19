@@ -22,10 +22,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
+// TODO: Fix SwipeToDismissBox API - temporarily commented out
+// import androidx.compose.material3.SwipeToDismissBox
+// import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
+// import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,89 +54,27 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskItemComponent(
     task: Task,
     onTaskComplete: (Task) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val hapticFeedback = LocalHapticFeedback.current
-    
-    // Don't allow swiping if task is already completed
-    val swipeState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            if (task.isCompleted) {
-                false // Don't allow swiping completed tasks
-            } else {
-                when (dismissValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onTaskComplete(task)
-                        true
-                    }
-                    else -> false
-                }
-            }
-        }
-    )
-
     if (task.isCompleted) {
-        // Show completed task without swipe functionality
+        // Show completed task
         CompletedTaskCard(task = task, modifier = modifier)
     } else {
-        // Show active task with swipe functionality
-        SwipeToDismissBox(
-            state = swipeState,
-            modifier = modifier,
-            backgroundContent = {
-                SwipeBackground(swipeState.dismissDirection)
-            }
-        ) {
-            TaskCard(task = task)
-        }
+        // Show active task
+        TaskCard(task = task, modifier = modifier)
     }
 }
 
-@Composable
-private fun SwipeBackground(
-    dismissDirection: SwipeToDismissBoxValue
-) {
-    val glassColors = adaptiveGlassColors()
-    
-    val backgroundBrush = when (dismissDirection) {
-        SwipeToDismissBoxValue.StartToEnd -> Brush.horizontalGradient(
-            colors = listOf(
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-            )
-        )
-        else -> Brush.horizontalGradient(
-            colors = listOf(Color.Transparent, Color.Transparent)
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backgroundBrush, RoundedCornerShape(16.dp))
-            .padding(horizontal = 20.dp),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        if (dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Complete task",
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-}
+// SwipeBackground removed - no longer needed without SwipeToDismissBox
 
 @Composable
 private fun TaskCard(
-    task: Task
+    task: Task,
+    modifier: Modifier = Modifier
 ) {
     val glassColors = adaptiveGlassColors()
     
@@ -152,7 +91,7 @@ private fun TaskCard(
     }
     
     GlassCard(
-        modifier = Modifier.semantics {
+        modifier = modifier.semantics {
             contentDescription = taskDescription
             role = Role.Button
         },

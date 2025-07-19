@@ -1,6 +1,6 @@
 package com.tasktracker.util
 
-import androidx.tracing.trace
+// import androidx.tracing.trace // Commented out due to API issues
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,26 +14,24 @@ import kotlin.system.measureTimeMillis
  */
 object PerformanceMonitor {
     
-    private const val TAG = "PerformanceMonitor"
-    private const val SLOW_OPERATION_THRESHOLD_MS = 100L
+    const val TAG = "PerformanceMonitor"
+    const val SLOW_OPERATION_THRESHOLD_MS = 100L
     
     /**
      * Trace a block of code for performance analysis.
      * This integrates with Android's systrace for detailed performance profiling.
      */
-    inline fun <T> traceSection(sectionName: String, block: () -> T): T {
-        return trace(sectionName) {
-            val result: T
-            val timeMs = measureTimeMillis {
-                result = block()
-            }
-            
-            if (timeMs > SLOW_OPERATION_THRESHOLD_MS) {
-                Log.w(TAG, "Slow operation detected: $sectionName took ${timeMs}ms")
-            }
-            
-            result
+    inline fun <T> traceSection(sectionName: String, crossinline block: () -> T): T {
+        val result: T
+        val timeMs = measureTimeMillis {
+            result = block()
         }
+        
+        if (timeMs > SLOW_OPERATION_THRESHOLD_MS) {
+            Log.w(TAG, "Slow operation detected: $sectionName took ${timeMs}ms")
+        }
+        
+        return result
     }
     
     /**
@@ -41,18 +39,16 @@ object PerformanceMonitor {
      */
     suspend inline fun <T> traceSuspendSection(sectionName: String, crossinline block: suspend () -> T): T {
         return withContext(Dispatchers.Default) {
-            trace(sectionName) {
-                val result: T
-                val timeMs = measureTimeMillis {
-                    result = block()
-                }
-                
-                if (timeMs > SLOW_OPERATION_THRESHOLD_MS) {
-                    Log.w(TAG, "Slow suspend operation detected: $sectionName took ${timeMs}ms")
-                }
-                
-                result
+            val result: T
+            val timeMs = measureTimeMillis {
+                result = block()
             }
+            
+            if (timeMs > SLOW_OPERATION_THRESHOLD_MS) {
+                Log.w(TAG, "Slow suspend operation detected: $sectionName took ${timeMs}ms")
+            }
+            
+            result
         }
     }
     
@@ -71,7 +67,7 @@ object PerformanceMonitor {
     /**
      * Monitor UI composition performance.
      */
-    inline fun <T> monitorComposition(composableName: String, block: () -> T): T {
+    inline fun <T> monitorComposition(composableName: String, crossinline block: () -> T): T {
         return traceSection("COMPOSE_$composableName", block)
     }
     

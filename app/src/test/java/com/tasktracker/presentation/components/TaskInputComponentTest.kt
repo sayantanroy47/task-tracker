@@ -1,20 +1,16 @@
 package com.tasktracker.presentation.components
 
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.tasktracker.presentation.theme.TaskTrackerTheme
+import com.tasktracker.domain.model.RecurrenceType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * Unit tests for TaskInputComponent
+ */
 @RunWith(AndroidJUnit4::class)
 class TaskInputComponentTest {
 
@@ -23,128 +19,258 @@ class TaskInputComponentTest {
 
     @Test
     fun taskInputComponent_displaysCorrectly() {
-        composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent()
-            }
-        }
-
-        // Verify add button is displayed but disabled initially
-        composeTestRule.onNodeWithContentDescription("Create task").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Create task").assertIsNotEnabled()
-    }
-
-    @Test
-    fun taskInputComponent_enablesButtonWhenTextEntered() {
-        composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent()
-            }
-        }
-
-        // The button should be disabled initially
-        composeTestRule.onNodeWithContentDescription("Create task").assertIsNotEnabled()
+        // Given
+        var createdTask: String? = null
         
-        // Note: With GlassTextField, we can't easily simulate text input in tests
-        // This test would need to be updated to work with the actual component behavior
-        // For now, we'll test the component's display properties
-    }
-
-    @Test
-    fun taskInputComponent_callsOnCreateTaskWhenButtonClicked() {
-        var createdTask = ""
-        
+        // When
         composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent(
-                    onCreateTask = { task -> createdTask = task }
-                )
-            }
+            TaskInputComponent(
+                onCreateTask = { description -> createdTask = description }
+            )
         }
 
-        // Note: With GlassTextField, direct text input simulation is complex
-        // This test verifies the component structure and callback setup
-        // In a real scenario, the callback would be triggered by user interaction
-        
-        // Verify the button exists and callback is properly set up
-        composeTestRule.onNodeWithContentDescription("Create task").assertExists()
-    }
+        // Then
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .assertIsDisplayed()
 
-    @Test
-    fun taskInputComponent_displaysInputError() {
-        composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent(
-                    inputError = "Task description cannot be empty"
-                )
-            }
-        }
-
-        // Verify error message is displayed
-        composeTestRule.onNodeWithText("Task description cannot be empty")
+        composeTestRule
+            .onNodeWithContentDescription("Add task")
             .assertIsDisplayed()
     }
 
     @Test
-    fun taskInputComponent_displaysSuccessFeedback() {
-        composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent(
-                    showTaskCreatedFeedback = true
-                )
-            }
-        }
-
-        // Verify success message is displayed
-        composeTestRule.onNodeWithText("Task created successfully!")
-            .assertIsDisplayed()
-        
-        // Verify success icon is displayed
-        composeTestRule.onNodeWithContentDescription("Task created")
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun taskInputComponent_displaysReminderButton() {
-        composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent()
-            }
-        }
-
-        // Verify reminder button is displayed
-        composeTestRule.onNodeWithContentDescription("Set reminder").assertIsDisplayed()
-    }
-
-    @Test
-    fun taskInputComponent_displaysRecurrenceButton() {
-        composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent()
-            }
-        }
-
-        // Verify recurrence button is displayed
-        composeTestRule.onNodeWithContentDescription("Set recurrence").assertIsDisplayed()
-    }
-
-    @Test
-    fun taskInputComponent_doesNotCallOnCreateTaskForEmptyInput() {
-        var taskCreated = false
+    fun taskInputComponent_createsTaskOnSubmit() {
+        // Given
+        var createdTask: String? = null
+        val taskDescription = "Test task"
         
         composeTestRule.setContent {
-            TaskTrackerTheme {
-                TaskInputComponent(
-                    onCreateTask = { taskCreated = true }
-                )
-            }
+            TaskInputComponent(
+                onCreateTask = { description -> createdTask = description }
+            )
         }
 
-        // Try to click button without entering text (should be disabled)
-        composeTestRule.onNodeWithContentDescription("Create task")
-            .assertIsNotEnabled()
+        // When
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .performTextInput(taskDescription)
 
-        // Verify callback was not called
-        assert(!taskCreated)
+        composeTestRule
+            .onNodeWithContentDescription("Add task")
+            .performClick()
+
+        // Then
+        assert(createdTask == taskDescription)
+    }
+
+    @Test
+    fun taskInputComponent_showsErrorMessage() {
+        // Given
+        val errorMessage = "Task description is required"
+        
+        composeTestRule.setContent {
+            TaskInputComponent(
+                inputError = errorMessage
+            )
+        }
+
+        // Then
+        composeTestRule
+            .onNodeWithText(errorMessage)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun taskInputComponent_showsTaskCreatedFeedback() {
+        // Given
+        composeTestRule.setContent {
+            TaskInputComponent(
+                showTaskCreatedFeedback = true
+            )
+        }
+
+        // Then
+        composeTestRule
+            .onNodeWithText("Task created successfully!")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun taskInputComponent_clearsInputAfterCreation() {
+        // Given
+        var createdTask: String? = null
+        val taskDescription = "Test task"
+        
+        composeTestRule.setContent {
+            TaskInputComponent(
+                onCreateTask = { description -> createdTask = description }
+            )
+        }
+
+        // When
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .performTextInput(taskDescription)
+
+        composeTestRule
+            .onNodeWithContentDescription("Add task")
+            .performClick()
+
+        // Then
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .assertTextEquals("")
+    }
+
+    @Test
+    fun taskInputComponent_handlesReminderSelection() {
+        // Given
+        var taskWithReminder: Pair<String, Long?>? = null
+        
+        composeTestRule.setContent {
+            TaskInputComponent(
+                onCreateTaskWithReminder = { description, reminderTime -> 
+                    taskWithReminder = description to reminderTime 
+                }
+            )
+        }
+
+        // When
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .performTextInput("Task with reminder")
+
+        composeTestRule
+            .onNodeWithContentDescription("Set reminder")
+            .performClick()
+
+        // Select reminder time (assuming picker is displayed)
+        composeTestRule
+            .onNodeWithText("1 hour")
+            .performClick()
+
+        composeTestRule
+            .onNodeWithText("Set Reminder")
+            .performClick()
+
+        composeTestRule
+            .onNodeWithContentDescription("Add task")
+            .performClick()
+
+        // Then
+        assert(taskWithReminder != null)
+        assert(taskWithReminder!!.first == "Task with reminder")
+        assert(taskWithReminder!!.second != null)
+    }
+
+    @Test
+    fun taskInputComponent_handlesRecurrenceSelection() {
+        // Given
+        var taskWithRecurrence: Triple<String, Long?, RecurrenceType?>? = null
+        
+        composeTestRule.setContent {
+            TaskInputComponent(
+                onCreateTaskWithRecurrence = { description, reminderTime, recurrenceType -> 
+                    taskWithRecurrence = Triple(description, reminderTime, recurrenceType)
+                }
+            )
+        }
+
+        // When
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .performTextInput("Recurring task")
+
+        composeTestRule
+            .onNodeWithContentDescription("Set recurrence")
+            .performClick()
+
+        composeTestRule
+            .onNodeWithText("Daily")
+            .performClick()
+
+        composeTestRule
+            .onNodeWithText("Set Recurrence")
+            .performClick()
+
+        composeTestRule
+            .onNodeWithContentDescription("Add task")
+            .performClick()
+
+        // Then
+        assert(taskWithRecurrence != null)
+        assert(taskWithRecurrence!!.first == "Recurring task")
+        assert(taskWithRecurrence!!.third == RecurrenceType.DAILY)
+    }
+
+    @Test
+    fun taskInputComponent_preventsEmptyTaskCreation() {
+        // Given
+        var createdTask: String? = null
+        var errorCleared = false
+        
+        composeTestRule.setContent {
+            TaskInputComponent(
+                onCreateTask = { description -> createdTask = description },
+                onClearInputError = { errorCleared = true }
+            )
+        }
+
+        // When - Try to create empty task
+        composeTestRule
+            .onNodeWithContentDescription("Add task")
+            .performClick()
+
+        // Then - Should not create task
+        assert(createdTask == null)
+    }
+
+    @Test
+    fun taskInputComponent_handlesVoiceInput() {
+        // Given
+        var createdTask: String? = null
+        
+        composeTestRule.setContent {
+            TaskInputComponent(
+                onCreateTask = { description -> createdTask = description }
+            )
+        }
+
+        // When
+        composeTestRule
+            .onNodeWithContentDescription("Voice input")
+            .performClick()
+
+        // Simulate voice input result
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .performTextInput("Voice input task")
+
+        composeTestRule
+            .onNodeWithContentDescription("Add task")
+            .performClick()
+
+        // Then
+        assert(createdTask == "Voice input task")
+    }
+
+    @Test
+    fun taskInputComponent_showsInputValidation() {
+        // Given
+        composeTestRule.setContent {
+            TaskInputComponent()
+        }
+
+        // When - Input very long text
+        val longText = "a".repeat(1000)
+        composeTestRule
+            .onNodeWithContentDescription("Task input field")
+            .performTextInput(longText)
+
+        // Then - Should show validation message
+        composeTestRule
+            .onNodeWithText("Task description is too long")
+            .assertIsDisplayed()
     }
 }

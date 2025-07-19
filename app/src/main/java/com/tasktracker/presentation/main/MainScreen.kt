@@ -101,14 +101,7 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            glassColors.background.copy(alpha = 0.8f),
-                            glassColors.background.copy(alpha = 0.95f)
-                        )
-                    )
-                )
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.9f))
         ) {
             LazyColumn(
                 state = listState,

@@ -17,16 +17,16 @@ import kotlin.system.measureTimeMillis
 object AnalyticsPerformanceOptimizer {
     
     // Cache for expensive calculations
-    private val calculationCache = ConcurrentHashMap<String, Any>()
-    private val cacheTimestamps = ConcurrentHashMap<String, Long>()
-    private const val CACHE_DURATION = 5 * 60 * 1000L // 5 minutes
+    internal val calculationCache = ConcurrentHashMap<String, Any>()
+    internal val cacheTimestamps = ConcurrentHashMap<String, Long>()
+    internal const val CACHE_DURATION = 5 * 60 * 1000L // 5 minutes
     
     /**
      * Cache expensive calculations with automatic expiration
      */
-    inline fun <reified T> cached(
+    fun <T> cached(
         key: String,
-        crossinline calculation: suspend () -> T
+        calculation: suspend () -> T
     ): suspend () -> T = {
         val currentTime = System.currentTimeMillis()
         val cachedTime = cacheTimestamps[key] ?: 0L
@@ -79,9 +79,9 @@ object AnalyticsPerformanceOptimizer {
     /**
      * Measure and log performance of analytics operations
      */
-    suspend inline fun <T> measureAnalyticsPerformance(
+    suspend fun <T> measureAnalyticsPerformance(
         operationName: String,
-        crossinline operation: suspend () -> T
+        operation: suspend () -> T
     ): T {
         val result: T
         val executionTime = measureTimeMillis {

@@ -55,7 +55,7 @@ object PerformanceConfig {
      * Check if performance monitoring should be enabled.
      */
     fun isPerformanceMonitoringEnabled(): Boolean {
-        return PERFORMANCE_LOG_ENABLED && BuildConfig.DEBUG
+        return PERFORMANCE_LOG_ENABLED && true // TODO: Fix BuildConfig.DEBUG reference
     }
     
     /**

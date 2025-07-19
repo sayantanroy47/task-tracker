@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -283,9 +284,7 @@ private fun FocusTasksSection(
             tasks.take(5).forEach { task -> // Limit to 5 tasks for focus
                 TaskItemComponent(
                     task = task,
-                    onTaskClick = { onDistractionRecorded() }, // Record as distraction
-                    onCompleteTask = { onTaskComplete(task.id) },
-                    onDeleteTask = { }, // Disabled during focus
+                    onTaskComplete = { onTaskComplete(task.id) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 

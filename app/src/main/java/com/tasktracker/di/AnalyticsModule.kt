@@ -1,7 +1,7 @@
 package com.tasktracker.di
 
-import com.tasktracker.data.local.TaskDao
 import com.tasktracker.data.local.dao.AnalyticsDao
+import com.tasktracker.data.local.dao.TaskDao
 import com.tasktracker.data.repository.AnalyticsRepositoryImpl
 import com.tasktracker.domain.repository.AnalyticsRepository
 import dagger.Module

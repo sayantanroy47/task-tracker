@@ -15,6 +15,7 @@ import com.tasktracker.domain.model.AchievementCategory
 import com.tasktracker.domain.model.AchievementRequirement
 import com.tasktracker.domain.model.CategoryStats
 import com.tasktracker.domain.model.DailyStats
+import com.tasktracker.domain.model.FocusMode
 import com.tasktracker.domain.model.FocusSession
 import com.tasktracker.domain.model.FocusSessionStats
 import com.tasktracker.domain.model.InsightType
@@ -553,6 +554,7 @@ class AnalyticsRepositoryImpl @Inject constructor(
             startTime = Instant.ofEpochMilli(entity.startTime),
             plannedDuration = Duration.ofMinutes(entity.plannedDurationMinutes.toLong()),
             actualDuration = entity.actualDurationMinutes?.let { Duration.ofMinutes(it.toLong()) },
+            mode = FocusMode.valueOf(entity.focusMode),
             tasksCompleted = entity.tasksCompleted,
             distractionCount = entity.distractionCount,
             focusScore = entity.focusScore
