@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)"
+    ],
+    "deny": []
+  },
+  "agents": [
+    {
+      "name": "calendar-integration",
+      "description": "Calendar and scheduling features",
+      "path": ".claude/agents/calendar-integration-agent.md"
+    },
+    {
+      "name": "chat-integration",
+      "description": "WhatsApp/messaging integration",
+      "path": ".claude/agents/chat-integration-agent.md"
+    },
+    {
+      "name": "database-storage",
+      "description": "SQLite database and data management",
+      "path": ".claude/agents/database-storage-agent.md"
+    },
+    {
+      "name": "flutter-architecture",
+      "description": "Flutter project structure and architecture",
+      "path": ".claude/agents/flutter-architecture-agent.md"
+    },
+    {
+      "name": "notifications",
+      "description": "Push notifications and reminders",
+      "path": ".claude/agents/notifications-agent.md"
+    },
+    {
+      "name": "testing",
+      "description": "Testing strategies and implementation",
+      "path": ".claude/agents/testing-agent.md"
+    },
+    {
+      "name": "ui-ux",
+      "description": "User interface and experience design",
+      "path": ".claude/agents/ui-ux-agent.md"
+    },
+    {
+      "name": "voice-processing",
+      "description": "Speech-to-text and NLP processing",
+      "path": ".claude/agents/voice-processing-agent.md"
+    }
+  ]
+}
