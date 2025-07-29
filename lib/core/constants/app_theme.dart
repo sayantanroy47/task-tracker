@@ -43,7 +43,7 @@ class AppTheme {
       ),
 
       // Card theme
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         color: AppColors.surface,
         elevation: AppElevation.sm,
         margin: EdgeInsets.symmetric(
@@ -56,7 +56,7 @@ class AppTheme {
       ),
 
       // Floating action button theme
-      floatingActionButtonTheme: const FloatingActionButtonTheme(
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: AppElevation.fab,
@@ -210,7 +210,7 @@ class AppTheme {
       ),
 
       // Card theme
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         color: AppColors.surfaceDark,
         elevation: AppElevation.sm,
         margin: EdgeInsets.symmetric(
@@ -223,7 +223,7 @@ class AppTheme {
       ),
 
       // Floating action button theme
-      floatingActionButtonTheme: const FloatingActionButtonTheme(
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primaryLight,
         foregroundColor: Colors.black,
         elevation: AppElevation.fab,

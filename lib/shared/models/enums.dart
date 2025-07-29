@@ -117,3 +117,45 @@ enum NotificationPriority {
   high,
   urgent,
 }
+
+extension NotificationPriorityExtension on NotificationPriority {
+  String get displayName {
+    switch (this) {
+      case NotificationPriority.low:
+        return 'Low';
+      case NotificationPriority.medium:
+        return 'Medium';
+      case NotificationPriority.high:
+        return 'High';
+      case NotificationPriority.urgent:
+        return 'Urgent';
+    }
+  }
+  
+  int get value {
+    switch (this) {
+      case NotificationPriority.low:
+        return 1;
+      case NotificationPriority.medium:
+        return 2;
+      case NotificationPriority.high:
+        return 3;
+      case NotificationPriority.urgent:
+        return 4;
+    }
+  }
+  
+  /// Get the Android notification importance level
+  int get androidImportance {
+    switch (this) {
+      case NotificationPriority.low:
+        return 2; // IMPORTANCE_LOW
+      case NotificationPriority.medium:
+        return 3; // IMPORTANCE_DEFAULT
+      case NotificationPriority.high:
+        return 4; // IMPORTANCE_HIGH
+      case NotificationPriority.urgent:
+        return 5; // IMPORTANCE_MAX
+    }
+  }
+}

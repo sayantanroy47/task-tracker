@@ -51,7 +51,7 @@ class DatabaseService {
     // Create categories table
     await db.execute('''
       CREATE TABLE categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
         color INTEGER NOT NULL,
         icon TEXT NOT NULL,
@@ -63,10 +63,10 @@ class DatabaseService {
     // Create tasks table
     await db.execute('''
       CREATE TABLE tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         description TEXT,
-        category_id INTEGER NOT NULL,
+        category_id TEXT NOT NULL,
         due_date TEXT,
         due_time TEXT,
         priority INTEGER DEFAULT 1,
@@ -82,7 +82,7 @@ class DatabaseService {
     await db.execute('''
       CREATE TABLE notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        task_id INTEGER NOT NULL,
+        task_id TEXT NOT NULL,
         scheduled_time TEXT NOT NULL,
         type TEXT NOT NULL,
         sent INTEGER DEFAULT 0,
@@ -149,6 +149,7 @@ class DatabaseService {
     // Insert default categories
     final defaultCategories = [
       {
+        'id': 'personal',
         'name': 'Personal',
         'color': Colors.blue.value,
         'icon': 'person',
@@ -156,6 +157,7 @@ class DatabaseService {
         'created_at': now,
       },
       {
+        'id': 'household',
         'name': 'Household',
         'color': Colors.green.value,
         'icon': 'home',
@@ -163,6 +165,7 @@ class DatabaseService {
         'created_at': now,
       },
       {
+        'id': 'work',
         'name': 'Work',
         'color': Colors.orange.value,
         'icon': 'work',
@@ -170,6 +173,7 @@ class DatabaseService {
         'created_at': now,
       },
       {
+        'id': 'family',
         'name': 'Family',
         'color': Colors.red.value,
         'icon': 'family_restroom',
@@ -177,6 +181,7 @@ class DatabaseService {
         'created_at': now,
       },
       {
+        'id': 'health',
         'name': 'Health',
         'color': Colors.purple.value,
         'icon': 'favorite',
@@ -184,6 +189,7 @@ class DatabaseService {
         'created_at': now,
       },
       {
+        'id': 'finance',
         'name': 'Finance',
         'color': Colors.amber.value,
         'icon': 'attach_money',

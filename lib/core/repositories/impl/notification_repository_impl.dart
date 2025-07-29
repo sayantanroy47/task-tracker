@@ -24,7 +24,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
-  Future<List<TaskNotification>> getNotificationsByTask(int taskId) async {
+  Future<List<TaskNotification>> getNotificationsByTask(String taskId) async {
     final db = await _database;
     final List<Map<String, dynamic>> maps = await db.query(
       'notifications',
@@ -106,7 +106,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
   @override
   Future<List<int>> createNotificationsForTask(
-    int taskId,
+    String taskId,
     DateTime taskDueDateTime,
     List<NotificationType> types,
   ) async {
@@ -171,7 +171,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
-  Future<void> deleteNotificationsByTask(int taskId) async {
+  Future<void> deleteNotificationsByTask(String taskId) async {
     final db = await _database;
     await db.delete(
       'notifications',
@@ -182,7 +182,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
-  Future<void> deleteNotificationsByTaskId(int taskId) async {
+  Future<void> deleteNotificationsByTaskId(String taskId) async {
     return deleteNotificationsByTask(taskId);
   }
 
@@ -251,7 +251,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
-  Stream<List<TaskNotification>> watchNotificationsByTask(int taskId) {
+  Stream<List<TaskNotification>> watchNotificationsByTask(String taskId) {
     return watchPendingNotifications().asyncMap((_) => getNotificationsByTask(taskId));
   }
 

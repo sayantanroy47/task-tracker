@@ -6,7 +6,7 @@ abstract class NotificationRepository {
   Future<List<TaskNotification>> getAllNotifications();
 
   /// Get notifications for a specific task
-  Future<List<TaskNotification>> getNotificationsByTask(int taskId);
+  Future<List<TaskNotification>> getNotificationsByTask(String taskId);
 
   /// Get pending notifications (not sent yet)
   Future<List<TaskNotification>> getPendingNotifications();
@@ -31,7 +31,7 @@ abstract class NotificationRepository {
 
   /// Create multiple notifications for a task
   Future<List<int>> createNotificationsForTask(
-    int taskId,
+    String taskId,
     DateTime taskDueDateTime,
     List<NotificationType> types,
   );
@@ -46,10 +46,10 @@ abstract class NotificationRepository {
   Future<void> deleteNotification(int id);
 
   /// Delete all notifications for a task
-  Future<void> deleteNotificationsByTask(int taskId);
+  Future<void> deleteNotificationsByTask(String taskId);
 
   /// Delete all notifications for a task by task ID (alias)
-  Future<void> deleteNotificationsByTaskId(int taskId);
+  Future<void> deleteNotificationsByTaskId(String taskId);
 
   /// Bulk delete notifications
   Future<void> bulkDeleteNotifications(List<int> notificationIds);
@@ -64,5 +64,5 @@ abstract class NotificationRepository {
   Stream<List<TaskNotification>> watchPendingNotifications();
 
   /// Watch notifications for a specific task (stream)
-  Stream<List<TaskNotification>> watchNotificationsByTask(int taskId);
+  Stream<List<TaskNotification>> watchNotificationsByTask(String taskId);
 }

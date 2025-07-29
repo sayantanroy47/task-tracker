@@ -138,15 +138,7 @@ class VoiceInputController extends StateNotifier<VoiceInputState> {
         description: parsedInput.description,
         categoryId: categoryId,
         dueDate: parsedInput.parsedDate,
-        dueTime: parsedInput.parsedTime != null && parsedInput.parsedDate != null
-            ? DateTime(
-                parsedInput.parsedDate!.year,
-                parsedInput.parsedDate!.month,
-                parsedInput.parsedDate!.day,
-                parsedInput.parsedTime!.hour,
-                parsedInput.parsedTime!.minute,
-              )
-            : null,
+        dueTime: parsedInput.parsedTime,
         priority: taskPriority,
         source: TaskSource.voice,
         hasReminder: parsedInput.parsedDate != null || parsedInput.parsedTime != null,

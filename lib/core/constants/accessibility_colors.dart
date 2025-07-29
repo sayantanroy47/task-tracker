@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
@@ -225,6 +227,3 @@ class AccessibilityColorReport {
     return 'Contrast: ${contrastRatio.toStringAsFixed(2)}:1 ($compliance)';
   }
 }
-
-// Import math for pow function
-import 'dart:math';

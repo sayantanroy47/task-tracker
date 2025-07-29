@@ -48,7 +48,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<Category?> getCategoryById(int id) async {
+  Future<Category?> getCategoryById(String id) async {
     final db = await _database;
     final List<Map<String, dynamic>> maps = await db.query(
       'categories',
@@ -74,14 +74,13 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<int> createCategory(Category category) async {
+  Future<Category> createCategory(Category category) async {
     final db = await _database;
     final categoryData = category.toJson();
-    categoryData.remove('id'); // Remove id for auto-increment
     
-    final id = await db.insert('categories', categoryData);
+    await db.insert('categories', categoryData);
     _notifyCategoriesChanged();
-    return id;
+    return category;
   }
 
   @override
@@ -99,7 +98,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<void> deleteCategory(int id) async {
+  Future<void> deleteCategory(String id) async {
     final category = await getCategoryById(id);
     if (category == null) return;
     
@@ -123,7 +122,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<bool> canDeleteCategory(int id) async {
+  Future<bool> canDeleteCategory(String id) async {
     final category = await getCategoryById(id);
     if (category == null) return false;
     
@@ -136,7 +135,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<int> getCategoryUsageCount(int id) async {
+  Future<int> getCategoryUsageCount(String id) async {
     final db = await _database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT COUNT(*) as count
