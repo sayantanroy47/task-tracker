@@ -100,6 +100,11 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
+  Future<int> insertNotification(TaskNotification notification) async {
+    return createNotification(notification);
+  }
+
+  @override
   Future<List<int>> createNotificationsForTask(
     int taskId,
     DateTime taskDueDateTime,
@@ -174,6 +179,11 @@ class NotificationRepositoryImpl implements NotificationRepository {
       whereArgs: [taskId],
     );
     _notifyNotificationsChanged();
+  }
+
+  @override
+  Future<void> deleteNotificationsByTaskId(int taskId) async {
+    return deleteNotificationsByTask(taskId);
   }
 
   @override

@@ -96,8 +96,50 @@ class DatabaseService {
     await db.execute('CREATE INDEX idx_tasks_due_date ON tasks (due_date)');
     await db.execute('CREATE INDEX idx_tasks_completed ON tasks (completed)');
     await db.execute('CREATE INDEX idx_tasks_created_at ON tasks (created_at)');
+    await db.execute('CREATE INDEX idx_tasks_updated_at ON tasks (updated_at)');
+    await db.execute('CREATE INDEX idx_tasks_priority ON tasks (priority)');
+    await db.execute('CREATE INDEX idx_tasks_source ON tasks (source)');
     await db.execute('CREATE INDEX idx_notifications_task_id ON notifications (task_id)');
     await db.execute('CREATE INDEX idx_notifications_scheduled_time ON notifications (scheduled_time)');
+    
+    // Composite indexes for common queries
+    await db.execute('CREATE INDEX idx_tasks_completed_due_date ON tasks (completed, due_date)');
+    await db.execute('CREATE INDEX idx_tasks_category_completed ON tasks (category_id, completed)');
+    await db.execute('CREATE INDEX idx_tasks_priority_due_date ON tasks (priority, due_date)');
+    
+    // Full-text search virtual table for efficient text search
+    await db.execute('''
+      CREATE VIRTUAL TABLE tasks_fts USING fts5(
+        title, 
+        description, 
+        content='tasks', 
+        content_rowid='id'
+      )
+    ''');
+    
+    // Trigger to keep FTS table in sync with tasks table
+    await db.execute('''
+      CREATE TRIGGER tasks_fts_insert AFTER INSERT ON tasks BEGIN
+        INSERT INTO tasks_fts(rowid, title, description) 
+        VALUES (new.id, new.title, new.description);
+      END
+    ''');
+    
+    await db.execute('''
+      CREATE TRIGGER tasks_fts_delete AFTER DELETE ON tasks BEGIN
+        INSERT INTO tasks_fts(tasks_fts, rowid, title, description) 
+        VALUES('delete', old.id, old.title, old.description);
+      END
+    ''');
+    
+    await db.execute('''
+      CREATE TRIGGER tasks_fts_update AFTER UPDATE ON tasks BEGIN
+        INSERT INTO tasks_fts(tasks_fts, rowid, title, description) 
+        VALUES('delete', old.id, old.title, old.description);
+        INSERT INTO tasks_fts(rowid, title, description) 
+        VALUES (new.id, new.title, new.description);
+      END
+    ''');
   }
 
   /// Insert default categories and sample data
@@ -177,5 +219,79 @@ class DatabaseService {
     final documentsDirectory = await getDatabasesPath();
     final path = join(documentsDirectory, _databaseName);
     return await databaseExists(path);
+  }
+
+  /// Get database performance statistics
+  Future<Map<String, dynamic>> getPerformanceStats() async {
+    final db = await database;
+    
+    // Get table row counts
+    final taskCount = await db.rawQuery('SELECT COUNT(*) as count FROM tasks');
+    final categoryCount = await db.rawQuery('SELECT COUNT(*) as count FROM categories');
+    final notificationCount = await db.rawQuery('SELECT COUNT(*) as count FROM notifications');
+    
+    // Get database size
+    final dbStats = await db.rawQuery('PRAGMA page_count');
+    final pageSize = await db.rawQuery('PRAGMA page_size');
+    final pageCount = dbStats.first['page_count'] as int;
+    final pageSizeBytes = pageSize.first['page_size'] as int;
+    final dbSizeBytes = pageCount * pageSizeBytes;
+    
+    // Get index usage stats
+    final indexStats = await db.rawQuery('''
+      SELECT name, tbl_name FROM sqlite_master 
+      WHERE type = 'index' AND name NOT LIKE 'sqlite_%'
+    ''');
+    
+    return {
+      'taskCount': taskCount.first['count'],
+      'categoryCount': categoryCount.first['count'],
+      'notificationCount': notificationCount.first['count'],
+      'databaseSizeBytes': dbSizeBytes,
+      'databaseSizeMB': (dbSizeBytes / (1024 * 1024)).toStringAsFixed(2),
+      'indexCount': indexStats.length,
+      'pageCount': pageCount,
+      'pageSize': pageSizeBytes,
+    };
+  }
+
+  /// Analyze query performance
+  Future<String> explainQuery(String query, [List<dynamic>? arguments]) async {
+    final db = await database;
+    final result = await db.rawQuery('EXPLAIN QUERY PLAN $query', arguments);
+    return result.map((row) => row.values.join(' | ')).join('\n');
+  }
+
+  /// Vacuum database to reclaim space and optimize performance
+  Future<void> vacuum() async {
+    final db = await database;
+    await db.execute('VACUUM');
+  }
+
+  /// Rebuild FTS index
+  Future<void> rebuildFTSIndex() async {
+    final db = await database;
+    await db.execute('INSERT INTO tasks_fts(tasks_fts) VALUES("rebuild")');
+  }
+
+  /// Get FTS search performance stats
+  Future<Map<String, dynamic>> getFTSStats() async {
+    final db = await database;
+    
+    try {
+      final ftsRows = await db.rawQuery('SELECT COUNT(*) as count FROM tasks_fts');
+      final ftsIntegrity = await db.rawQuery('INSERT INTO tasks_fts(tasks_fts) VALUES("integrity-check")');
+      
+      return {
+        'ftsRowCount': ftsRows.first['count'],
+        'ftsIntegrityOk': true,
+      };
+    } catch (e) {
+      return {
+        'ftsRowCount': 0,
+        'ftsIntegrityOk': false,
+        'error': e.toString(),
+      };
+    }
   }
 }

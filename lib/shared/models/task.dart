@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 /// Task model representing a single task item
@@ -8,7 +9,7 @@ class Task {
   final String? description;
   final String categoryId;
   final DateTime? dueDate;
-  final DateTime? dueTime;
+  final TimeOfDay? dueTime;
   final TaskPriority priority;
   final bool isCompleted;
   final DateTime createdAt;
@@ -39,7 +40,7 @@ class Task {
     String? description,
     required String categoryId,
     DateTime? dueDate,
-    DateTime? dueTime,
+    TimeOfDay? dueTime,
     TaskPriority priority = TaskPriority.medium,
     TaskSource source = TaskSource.manual,
     bool hasReminder = false,
@@ -69,7 +70,7 @@ class Task {
     String? description,
     String? categoryId,
     DateTime? dueDate,
-    DateTime? dueTime,
+    TimeOfDay? dueTime,
     TaskPriority? priority,
     bool? isCompleted,
     DateTime? createdAt,
@@ -187,49 +188,87 @@ class Task {
     return 'Task{id: $id, title: $title, isCompleted: $isCompleted, dueDate: $dueDate}';
   }
 
-  /// Convert to Map for database storage
+  /// Convert to Map for database storage (compatible with existing schema)
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'title': title,
       'description': description,
-      'categoryId': categoryId,
-      'dueDate': dueDate?.millisecondsSinceEpoch,
-      'dueTime': dueTime?.millisecondsSinceEpoch,
+      'category_id': categoryId,
+      'due_date': dueDate?.toIso8601String().split('T')[0],
+      'due_time': dueTime != null ? '${dueTime!.hour.toString().padLeft(2, '0')}:${dueTime!.minute.toString().padLeft(2, '0')}' : null,
       'priority': priority.index,
-      'isCompleted': isCompleted ? 1 : 0,
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'updatedAt': updatedAt.millisecondsSinceEpoch,
-      'source': source.index,
-      'hasReminder': hasReminder ? 1 : 0,
-      'reminderIntervals': reminderIntervals.map((e) => e.index).join(','),
+      'completed': isCompleted ? 1 : 0,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'source': source.name,
     };
   }
 
-  /// Create from Map (database)
+  /// Convert to JSON for API compatibility
+  Map<String, dynamic> toJson() => toMap();
+
+  /// Parse TimeOfDay from string format "hour:minute"
+  static TimeOfDay? _parseTimeOfDay(String? timeString) {
+    if (timeString == null || timeString.isEmpty) return null;
+    
+    try {
+      final parts = timeString.split(':');
+      if (parts.length == 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+        if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+          return TimeOfDay(hour: hour, minute: minute);
+        }
+      }
+    } catch (e) {
+      // Invalid format, return null
+    }
+    return null;
+  }
+
+  /// Create from Map (database) - compatible with existing schema
   factory Task.fromMap(Map<String, dynamic> map) {
     return Task(
-      id: map['id'],
-      title: map['title'],
+      id: map['id']?.toString() ?? '',
+      title: map['title'] ?? '',
       description: map['description'],
-      categoryId: map['categoryId'],
-      dueDate: map['dueDate'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['dueDate'])
-          : null,
-      dueTime: map['dueTime'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['dueTime'])
-          : null,
+      categoryId: map['category_id']?.toString() ?? map['categoryId']?.toString() ?? '',
+      dueDate: map['due_date'] != null 
+          ? DateTime.tryParse(map['due_date'])
+          : (map['dueDate'] != null 
+              ? DateTime.fromMillisecondsSinceEpoch(map['dueDate'])
+              : null),
+      dueTime: map['due_time'] != null 
+          ? _parseTimeOfDay(map['due_time'])
+          : (map['dueTime'] != null 
+              ? _parseTimeOfDay(map['dueTime'])
+              : null),
       priority: TaskPriority.values[map['priority'] ?? 1],
-      isCompleted: map['isCompleted'] == 1,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt']),
-      source: TaskSource.values[map['source'] ?? 0],
-      hasReminder: map['hasReminder'] == 1,
-      reminderIntervals: map['reminderIntervals'] != null && map['reminderIntervals'].isNotEmpty
-          ? map['reminderIntervals'].split(',').map<ReminderInterval>((e) => ReminderInterval.values[int.parse(e)]).toList()
-          : [],
+      isCompleted: (map['completed'] ?? map['isCompleted']) == 1,
+      createdAt: map['created_at'] != null 
+          ? DateTime.tryParse(map['created_at']) ?? DateTime.now()
+          : (map['createdAt'] != null 
+              ? DateTime.fromMillisecondsSinceEpoch(map['createdAt'])
+              : DateTime.now()),
+      updatedAt: map['updated_at'] != null 
+          ? DateTime.tryParse(map['updated_at']) ?? DateTime.now()
+          : (map['updatedAt'] != null 
+              ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt'])
+              : DateTime.now()),
+      source: map['source'] is String 
+          ? TaskSource.values.firstWhere(
+              (e) => e.name == map['source'], 
+              orElse: () => TaskSource.manual,
+            )
+          : TaskSource.values[map['source'] ?? 0],
+      hasReminder: false, // Legacy field, not in current schema
+      reminderIntervals: const [], // Legacy field, not in current schema
     );
   }
+
+  /// Create from JSON (API compatibility)
+  factory Task.fromJson(Map<String, dynamic> json) => Task.fromMap(json);
 }
 
 /// Task priority levels

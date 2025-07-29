@@ -1,5 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/core.dart';
+import '../../core/services/flutter_notification_service.dart';
+import '../../core/services/task_notification_manager.dart';
+import '../../core/services/voice_service_impl.dart';
+import '../../core/services/intent_handler_provider.dart';
+import '../../core/services/notification_preferences_service.dart';
+import '../../features/chat/services/chat_integration_service.dart';
 
 /// Core service providers that form the foundation of dependency injection
 /// These providers are used throughout the app for service access
@@ -7,6 +13,43 @@ import '../../core/core.dart';
 /// Database service provider - singleton instance
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
   return DatabaseService();
+});
+
+/// Notification preferences service provider
+final notificationPreferencesServiceProvider = Provider<NotificationPreferencesService>((ref) {
+  final databaseService = ref.read(databaseServiceProvider);
+  return NotificationPreferencesService(databaseService);
+});
+
+/// Notification service provider - singleton instance
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  final service = FlutterNotificationService();
+  final preferencesService = ref.read(notificationPreferencesServiceProvider);
+  service.setPreferencesService(preferencesService);
+  return service;
+});
+
+/// Voice service provider - singleton instance
+final voiceServiceProvider = Provider<VoiceService>((ref) {
+  return VoiceServiceImpl();
+});
+
+/// Task notification manager provider - depends on notification and task services
+final taskNotificationManagerProvider = Provider<TaskNotificationManager>((ref) {
+  final notificationService = ref.read(notificationServiceProvider);
+  final taskRepository = ref.read(taskRepositoryProvider);
+  final notificationRepository = ref.read(notificationRepositoryProvider);
+  
+  return TaskNotificationManager(
+    notificationService: notificationService,
+    taskRepository: taskRepository,
+    notificationRepository: notificationRepository,
+  );
+});
+
+/// Global navigator key provider for navigation outside of widget context
+final navigatorKeyProvider = Provider<GlobalKey<NavigatorState>>((ref) {
+  return GlobalKey<NavigatorState>();
 });
 
 /// Repository providers that depend on services
@@ -38,6 +81,26 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
   // through the singleton pattern in DatabaseService
   await databaseService.database;
   
+  // Initialize notification preferences service
+  final notificationPreferencesService = ref.read(notificationPreferencesServiceProvider);
+  await notificationPreferencesService.initialize();
+  
+  // Initialize notification service
+  final notificationService = ref.read(notificationServiceProvider);
+  await notificationService.initialize();
+  
+  // Initialize voice service
+  final voiceService = ref.read(voiceServiceProvider);
+  await voiceService.initialize();
+  
+  // Initialize chat integration service
+  final chatIntegrationService = ref.read(chatIntegrationServiceProvider);
+  await chatIntegrationService.initialize();
+  
+  // Initialize notification manager and set up action handlers
+  final notificationManager = ref.read(taskNotificationManagerProvider);
+  notificationManager.initializeActionHandlers();
+  
   // Verify default categories exist (they are inserted on first database creation)
   final categoryRepository = ref.read(categoryRepositoryProvider);
   final categories = await categoryRepository.getAllCategories();
@@ -66,31 +129,49 @@ class AppStateNotifier extends StateNotifier<AppState> {
       // Wait for app initialization to complete
       await _ref.read(appInitializationProvider.future);
       
-      // For now, set permissions to false until voice and notification services are implemented
-      state = const AppState.ready(
-        hasNotificationPermissions: false,
-        hasVoicePermissions: false,
+      // Check initial permission status
+      final notificationService = _ref.read(notificationServiceProvider);
+      final hasNotificationPermissions = await notificationService.hasPermissions();
+      
+      final voiceService = _ref.read(voiceServiceProvider);
+      final hasVoicePermissions = await voiceService.hasPermissions();
+      
+      state = AppState.ready(
+        hasNotificationPermissions: hasNotificationPermissions,
+        hasVoicePermissions: hasVoicePermissions,
       );
     } catch (error) {
       state = AppState.error(error.toString());
     }
   }
   
-  /// Request notification permissions (placeholder until NotificationService is implemented)
+  /// Request notification permissions
   Future<void> requestNotificationPermissions() async {
-    // TODO: Implement when NotificationService is ready
-    if (state is AppStateReady) {
-      final currentState = state as AppStateReady;
-      state = currentState.copyWith(hasNotificationPermissions: false);
+    try {
+      final notificationService = _ref.read(notificationServiceProvider);
+      final granted = await notificationService.requestPermissions();
+      
+      if (state is AppStateReady) {
+        final currentState = state as AppStateReady;
+        state = currentState.copyWith(hasNotificationPermissions: granted);
+      }
+    } catch (error) {
+      // Keep current state if permission request fails
     }
   }
   
-  /// Request voice permissions (placeholder until VoiceService is implemented)
+  /// Request voice permissions
   Future<void> requestVoicePermissions() async {
-    // TODO: Implement when VoiceService is ready
-    if (state is AppStateReady) {
-      final currentState = state as AppStateReady;
-      state = currentState.copyWith(hasVoicePermissions: false);
+    try {
+      final voiceService = _ref.read(voiceServiceProvider);
+      final granted = await voiceService.requestPermissions();
+      
+      if (state is AppStateReady) {
+        final currentState = state as AppStateReady;
+        state = currentState.copyWith(hasVoicePermissions: granted);
+      }
+    } catch (error) {
+      // Keep current state if permission request fails
     }
   }
 }

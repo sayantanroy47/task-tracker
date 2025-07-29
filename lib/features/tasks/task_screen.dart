@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/constants.dart';
+import '../../core/navigation/navigation_service.dart';
 import '../../shared/models/models.dart';
 import '../../shared/providers/task_provider.dart';
 import '../../shared/widgets/widgets.dart';
+import '../voice/voice.dart';
 
 /// Main task screen with list of tasks and floating voice button
 /// Optimized for forgetful users with clear visual hierarchy
@@ -62,6 +65,10 @@ class _TaskScreenState extends ConsumerState<TaskScreen>
       
       body: RefreshIndicator(
         onRefresh: _refreshTasks,
+        backgroundColor: theme.colorScheme.surface,
+        color: AppColors.primary,
+        strokeWidth: 3.0,
+        displacement: 80.0,
         child: CustomScrollView(
           slivers: [
             // Task statistics summary
@@ -97,17 +104,37 @@ class _TaskScreenState extends ConsumerState<TaskScreen>
                     final category = categories.cast<Category?>()
                         .firstWhere((cat) => cat?.id == task.categoryId, orElse: () => null);
                     
-                    return TaskListItem(
-                      task: task,
-                      category: category,
-                      onTap: () => _editTask(task),
-                      onToggleComplete: (updatedTask) {
-                        ref.read(taskProvider.notifier).updateTask(updatedTask);
-                      },
-                      onEdit: () => _editTask(task),
+                    return RepaintBoundary(
+                      child: TweenAnimationBuilder<double>(
+                        duration: Duration(milliseconds: 300 + (index * 50)),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: TaskListItem(
+                                key: ValueKey(task.id),
+                                task: task,
+                                category: category,
+                                onTap: () => _editTask(task),
+                                onToggleComplete: (updatedTask) {
+                                  ref.read(taskProvider.notifier).updateTask(updatedTask);
+                                },
+                                onEdit: () => _editTask(task),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                   childCount: filteredPendingTasks.length,
+                  findChildIndexCallback: (Key key) {
+                    final valueKey = key as ValueKey<String>;
+                    final taskId = valueKey.value;
+                    return filteredPendingTasks.indexWhere((task) => task.id == taskId);
+                  },
                 ),
               ),
             ],
@@ -125,17 +152,25 @@ class _TaskScreenState extends ConsumerState<TaskScreen>
                     final category = categories.cast<Category?>()
                         .firstWhere((cat) => cat?.id == task.categoryId, orElse: () => null);
                     
-                    return TaskListItem(
-                      task: task,
-                      category: category,
-                      onTap: () => _editTask(task),
-                      onToggleComplete: (updatedTask) {
-                        ref.read(taskProvider.notifier).updateTask(updatedTask);
-                      },
-                      showCategory: false, // Less visual clutter for completed tasks
+                    return RepaintBoundary(
+                      child: TaskListItem(
+                        key: ValueKey('completed_${task.id}'),
+                        task: task,
+                        category: category,
+                        onTap: () => _editTask(task),
+                        onToggleComplete: (updatedTask) {
+                          ref.read(taskProvider.notifier).updateTask(updatedTask);
+                        },
+                        showCategory: false, // Less visual clutter for completed tasks
+                      ),
                     );
                   },
                   childCount: filteredCompletedTasks.length,
+                  findChildIndexCallback: (Key key) {
+                    final valueKey = key as ValueKey<String>;
+                    final taskId = valueKey.value.replaceFirst('completed_', '');
+                    return filteredCompletedTasks.indexWhere((task) => task.id == taskId);
+                  },
                 ),
               ),
             
@@ -225,28 +260,40 @@ class _TaskScreenState extends ConsumerState<TaskScreen>
   }
 
   Widget _buildCategoryFilter(List<Category> categories) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: CategoryChipList(
-        categories: [
-          // Add "All" category
-          Category(
-            id: 'all',
-            name: 'All',
-            icon: '📋',
-            color: AppColors.primary,
-            createdAt: DateTime.now(),
+    return TweenAnimationBuilder<double>(
+      duration: AppDurations.medium,
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 10 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: CategoryChipList(
+                categories: [
+                  // Add "All" category
+                  Category(
+                    id: 'all',
+                    name: 'All',
+                    icon: '📋',
+                    color: AppColors.primary,
+                    createdAt: DateTime.now(),
+                  ),
+                  ...categories,
+                ],
+                selectedCategory: _selectedCategoryFilter,
+                onCategorySelected: (category) {
+                  setState(() {
+                    _selectedCategoryFilter = category.id == 'all' ? null : category;
+                  });
+                },
+                isCompact: true,
+              ),
+            ),
           ),
-          ...categories,
-        ],
-        selectedCategory: _selectedCategoryFilter,
-        onCategorySelected: (category) {
-          setState(() {
-            _selectedCategoryFilter = category.id == 'all' ? null : category;
-          });
-        },
-        isCompact: true,
-      ),
+        );
+      },
     );
   }
 
@@ -392,26 +439,57 @@ class _TaskScreenState extends ConsumerState<TaskScreen>
   }
 
   Widget _buildFloatingActionButton() {
-    return LargeVoiceButton(
-      onPressed: _handleVoiceInput,
-      label: 'Add Task',
-      isListening: false, // TODO: Connect to voice service
-      isProcessing: false, // TODO: Connect to voice service
+    final voiceState = ref.watch(voiceInputProvider);
+    
+    return AnimatedScale(
+      scale: voiceState is VoiceInputListening ? 1.1 : 1.0,
+      duration: AppDurations.fast,
+      child: AnimatedContainer(
+        duration: AppDurations.medium,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.3),
+              blurRadius: voiceState is VoiceInputListening ? 20 : 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: LargeVoiceButton(
+          onPressed: _handleVoiceInput,
+          label: 'Add Task',
+          isListening: voiceState is VoiceInputListening,
+          isProcessing: voiceState is VoiceInputProcessing || voiceState is VoiceInputCreating,
+        ),
+      ),
     );
   }
 
   void _createTask() {
-    _showTaskInputModal();
+    final navigationService = ref.read(navigationServiceProvider);
+    navigationService.goToTaskCreation(context);
   }
 
   void _editTask(Task task) {
-    _showTaskInputModal(task: task);
+    final navigationService = ref.read(navigationServiceProvider);
+    navigationService.goToTaskEdit(context, task.id);
   }
 
   void _handleVoiceInput() {
-    // TODO: Implement voice input functionality
-    // For now, just show the task input modal
-    _showTaskInputModal(isVoiceInput: true);
+    final voiceState = ref.read(voiceInputProvider);
+    
+    if (voiceState is VoiceInputListening) {
+      // Stop current voice input
+      ref.read(voiceInputProvider.notifier).stopVoiceInput();
+    } else {
+      // Show voice input overlay
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const VoiceInputOverlay(),
+      );
+    }
   }
 
   void _showTaskInputModal({Task? task, bool isVoiceInput = false}) {
@@ -501,17 +579,23 @@ class _TaskScreenState extends ConsumerState<TaskScreen>
   }
 
   void _showSettings() {
-    // TODO: Implement settings screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Settings coming soon!'),
-      ),
-    );
+    final navigationService = ref.read(navigationServiceProvider);
+    navigationService.goToSettings(context);
   }
 
   Future<void> _refreshTasks() async {
-    // TODO: Implement refresh functionality
-    // For now, just add a delay to simulate refresh
-    await Future.delayed(const Duration(seconds: 1));
+    // Show haptic feedback for refresh
+    HapticFeedback.mediumImpact();
+    
+    // Simulate network refresh
+    await Future.delayed(const Duration(milliseconds: 800));
+    
+    // Force rebuild of task providers
+    ref.invalidate(pendingTasksProvider);
+    ref.invalidate(completedTasksProvider);
+    ref.invalidate(taskStatsProvider);
+    
+    // Success haptic
+    HapticFeedback.lightImpact();
   }
 }

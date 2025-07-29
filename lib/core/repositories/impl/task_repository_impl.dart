@@ -20,7 +20,7 @@ class TaskRepositoryImpl implements TaskRepository {
       'tasks',
       orderBy: 'created_at DESC',
     );
-    return maps.map((map) => Task.fromJson(map)).toList();
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
@@ -32,7 +32,7 @@ class TaskRepositoryImpl implements TaskRepository {
       whereArgs: [categoryId],
       orderBy: 'created_at DESC',
     );
-    return maps.map((map) => Task.fromJson(map)).toList();
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
@@ -45,7 +45,7 @@ class TaskRepositoryImpl implements TaskRepository {
       whereArgs: ['$dateString%'],
       orderBy: 'due_time ASC, created_at DESC',
     );
-    return maps.map((map) => Task.fromJson(map)).toList();
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
@@ -59,7 +59,7 @@ class TaskRepositoryImpl implements TaskRepository {
       whereArgs: [startString, endString],
       orderBy: 'due_date ASC, due_time ASC',
     );
-    return maps.map((map) => Task.fromJson(map)).toList();
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
@@ -71,7 +71,7 @@ class TaskRepositoryImpl implements TaskRepository {
       whereArgs: [1],
       orderBy: 'updated_at DESC',
     );
-    return maps.map((map) => Task.fromJson(map)).toList();
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
@@ -83,7 +83,7 @@ class TaskRepositoryImpl implements TaskRepository {
       whereArgs: [0],
       orderBy: 'due_date ASC, due_time ASC, created_at DESC',
     );
-    return maps.map((map) => Task.fromJson(map)).toList();
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
@@ -107,7 +107,7 @@ class TaskRepositoryImpl implements TaskRepository {
       '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
     ]);
     
-    return maps.map((map) => Task.fromJson(map)).toList();
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
@@ -120,26 +120,131 @@ class TaskRepositoryImpl implements TaskRepository {
       limit: 1,
     );
     if (maps.isEmpty) return null;
-    return Task.fromJson(maps.first);
+    return Task.fromMap(maps.first);
   }
 
   @override
   Future<List<Task>> searchTasks(String query) async {
     final db = await _database;
-    final searchPattern = '%${query.toLowerCase()}%';
-    final List<Map<String, dynamic>> maps = await db.query(
-      'tasks',
-      where: 'LOWER(title) LIKE ? OR LOWER(description) LIKE ?',
-      whereArgs: [searchPattern, searchPattern],
-      orderBy: 'created_at DESC',
-    );
-    return maps.map((map) => Task.fromJson(map)).toList();
+    
+    // Use FTS5 for full-text search when available
+    try {
+      final List<Map<String, dynamic>> maps = await db.rawQuery('''
+        SELECT t.* FROM tasks t
+        INNER JOIN tasks_fts fts ON t.id = fts.rowid
+        WHERE tasks_fts MATCH ?
+        ORDER BY rank, t.created_at DESC
+      ''', [query]);
+      
+      return maps.map((map) => Task.fromMap(map)).toList();
+    } catch (e) {
+      // Fall back to LIKE search if FTS fails
+      debugPrint('FTS search failed, falling back to LIKE: $e');
+      final searchPattern = '%${query.toLowerCase()}%';
+      final List<Map<String, dynamic>> maps = await db.query(
+        'tasks',
+        where: 'LOWER(title) LIKE ? OR LOWER(description) LIKE ?',
+        whereArgs: [searchPattern, searchPattern],
+        orderBy: 'created_at DESC',
+      );
+      return maps.map((map) => Task.fromMap(map)).toList();
+    }
+  }
+
+  /// Enhanced search with pagination and filtering
+  Future<List<Task>> searchTasksPaginated({
+    String? query,
+    List<String>? categoryIds,
+    List<TaskPriority>? priorities,
+    List<TaskSource>? sources,
+    bool? isCompleted,
+    DateTime? startDate,
+    DateTime? endDate,
+    String orderBy = 'created_at DESC',
+    int? limit,
+    int? offset,
+  }) async {
+    final db = await _database;
+    
+    final whereConditions = <String>[];
+    final whereArgs = <dynamic>[];
+    
+    // Text search condition
+    String fromClause = 'tasks t';
+    if (query != null && query.trim().isNotEmpty) {
+      try {
+        // Use FTS5 for text search
+        fromClause = 'tasks t INNER JOIN tasks_fts fts ON t.id = fts.rowid';
+        whereConditions.add('tasks_fts MATCH ?');
+        whereArgs.add(query);
+      } catch (e) {
+        // Fall back to LIKE search
+        whereConditions.add('(LOWER(t.title) LIKE ? OR LOWER(t.description) LIKE ?)');
+        final searchPattern = '%${query.toLowerCase()}%';
+        whereArgs.addAll([searchPattern, searchPattern]);
+      }
+    }
+    
+    // Category filter
+    if (categoryIds != null && categoryIds.isNotEmpty) {
+      final placeholders = categoryIds.map((_) => '?').join(',');
+      whereConditions.add('t.category_id IN ($placeholders)');
+      whereArgs.addAll(categoryIds);
+    }
+    
+    // Priority filter
+    if (priorities != null && priorities.isNotEmpty) {
+      final placeholders = priorities.map((_) => '?').join(',');
+      whereConditions.add('t.priority IN ($placeholders)');
+      whereArgs.addAll(priorities.map((p) => p.index));
+    }
+    
+    // Source filter
+    if (sources != null && sources.isNotEmpty) {
+      final placeholders = sources.map((_) => '?').join(',');
+      whereConditions.add('t.source IN ($placeholders)');
+      whereArgs.addAll(sources.map((s) => s.name));
+    }
+    
+    // Completion status filter
+    if (isCompleted != null) {
+      whereConditions.add('t.completed = ?');
+      whereArgs.add(isCompleted ? 1 : 0);
+    }
+    
+    // Date range filter
+    if (startDate != null) {
+      whereConditions.add('t.due_date >= ?');
+      whereArgs.add(startDate.toIso8601String().split('T')[0]);
+    }
+    if (endDate != null) {
+      whereConditions.add('t.due_date <= ?');
+      whereArgs.add(endDate.toIso8601String().split('T')[0]);
+    }
+    
+    // Build query
+    final whereClause = whereConditions.isNotEmpty 
+        ? 'WHERE ${whereConditions.join(' AND ')}' 
+        : '';
+    
+    final limitClause = limit != null ? 'LIMIT $limit' : '';
+    final offsetClause = offset != null ? 'OFFSET $offset' : '';
+    
+    final sql = '''
+      SELECT t.* FROM $fromClause
+      $whereClause
+      ORDER BY $orderBy
+      $limitClause $offsetClause
+    ''';
+    
+    final List<Map<String, dynamic>> maps = await db.rawQuery(sql, whereArgs);
+    return maps.map((map) => Task.fromMap(map)).toList();
   }
 
   @override
   Future<int> createTask(Task task) async {
     final db = await _database;
-    final taskData = task.toJson();
+    final taskData = task.toMap();
     taskData.remove('id'); // Remove id for auto-increment
     
     final id = await db.insert('tasks', taskData);
@@ -150,7 +255,7 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<void> updateTask(Task task) async {
     final db = await _database;
-    final taskData = task.toJson();
+    final taskData = task.toMap();
     
     await db.update(
       'tasks',
@@ -204,7 +309,7 @@ class TaskRepositoryImpl implements TaskRepository {
     for (final task in tasks) {
       batch.update(
         'tasks',
-        task.toJson(),
+        task.toMap(),
         where: 'id = ?',
         whereArgs: [task.id],
       );

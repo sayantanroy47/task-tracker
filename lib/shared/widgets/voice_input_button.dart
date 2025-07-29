@@ -1,5 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants/constants.dart';
+import '../../core/services/accessibility_service.dart';
 
 /// Voice input button with animation states
 /// Optimized for accessibility and clear visual feedback
@@ -31,22 +34,37 @@ class _VoiceInputButtonState extends State<VoiceInputButton>
   late AnimationController _rippleController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _rippleAnimation;
+  
+  // Accessibility support
+  late AccessibilityService _accessibilityService;
+  final FocusNode _focusNode = FocusNode();
+  bool _isKeyboardFocused = false;
 
   @override
   void initState() {
     super.initState();
     
-    // Pulse animation for listening state
+    // Initialize accessibility service
+    _accessibilityService = AccessibilityService();
+    
+    // Pulse animation for listening state (respect reduced motion)
     _pulseController = AnimationController(
-      duration: AppDurations.voicePulse,
+      duration: _accessibilityService.isReducedMotionEnabled 
+          ? const Duration(milliseconds: 500)
+          : AppDurations.voicePulse,
       vsync: this,
     );
     
     // Ripple animation for processing state
     _rippleController = AnimationController(
-      duration: AppDurations.medium,
+      duration: _accessibilityService.isReducedMotionEnabled
+          ? const Duration(milliseconds: 200)
+          : AppDurations.medium,
       vsync: this,
     );
+    
+    // Focus handling for keyboard navigation
+    _focusNode.addListener(_onFocusChanged);
     
     _pulseAnimation = Tween<double>(
       begin: 1.0,
@@ -69,17 +87,28 @@ class _VoiceInputButtonState extends State<VoiceInputButton>
   void dispose() {
     _pulseController.dispose();
     _rippleController.dispose();
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onFocusChanged() {
+    setState(() {
+      _isKeyboardFocused = _focusNode.hasFocus;
+    });
   }
 
   @override
   void didUpdateWidget(VoiceInputButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    // Handle animation state changes
+    // Handle animation state changes (respect reduced motion)
     if (widget.isListening != oldWidget.isListening) {
       if (widget.isListening) {
-        _pulseController.repeat(reverse: true);
+        if (!_accessibilityService.isReducedMotionEnabled) {
+          _pulseController.repeat(reverse: true);
+        }
+        _accessibilityService.announce(_getAccessibilityLabel());
       } else {
         _pulseController.stop();
         _pulseController.reset();
@@ -88,7 +117,10 @@ class _VoiceInputButtonState extends State<VoiceInputButton>
     
     if (widget.isProcessing != oldWidget.isProcessing) {
       if (widget.isProcessing) {
-        _rippleController.repeat();
+        if (!_accessibilityService.isReducedMotionEnabled) {
+          _rippleController.repeat();
+        }
+        _accessibilityService.announce('Processing voice input');
       } else {
         _rippleController.stop();
         _rippleController.reset();
@@ -124,8 +156,31 @@ class _VoiceInputButtonState extends State<VoiceInputButton>
     } else if (widget.isListening) {
       return 'Listening... Tap to stop';
     } else {
-      return widget.tooltip ?? 'Tap to start voice input';
+      return widget.tooltip ?? 'Voice input button';
     }
+  }
+
+  String _createDetailedHint() {
+    if (widget.isProcessing) {
+      return 'Voice input is being processed. Please wait.';
+    } else if (widget.isListening) {
+      return 'Microphone is active. Speak your task now. Tap to stop recording.';
+    } else {
+      return 'Double tap to start voice input. Speak your task and the app will create it for you.';
+    }
+  }
+
+  void _handleActivation() {
+    if (!widget.isEnabled) return;
+    
+    // Provide haptic feedback
+    _accessibilityService.provideFeedback(
+      type: widget.isListening 
+          ? HapticFeedbackType.mediumImpact 
+          : HapticFeedbackType.lightImpact,
+    );
+    
+    widget.onPressed?.call();
   }
 
   @override
@@ -133,19 +188,40 @@ class _VoiceInputButtonState extends State<VoiceInputButton>
     final buttonColor = _getButtonColor();
     final icon = _getButtonIcon();
     final accessibilityLabel = _getAccessibilityLabel();
+    final isHighContrast = _accessibilityService.isHighContrastEnabled;
+    final minSize = _accessibilityService.minTouchTargetSize;
+    final actualSize = widget.size < minSize ? minSize : widget.size;
     
-    return Semantics(
-      button: true,
-      enabled: widget.isEnabled,
-      label: accessibilityLabel,
-      hint: widget.isListening 
-          ? 'Speak your task now' 
-          : 'Double tap to activate voice input',
-      child: GestureDetector(
-        onTap: widget.isEnabled ? widget.onPressed : null,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
+    return _accessibilityService.createFocusWrapper(
+      focusNode: _focusNode,
+      focusColor: Theme.of(context).colorScheme.primary,
+      borderWidth: 3.0,
+      borderRadius: BorderRadius.circular(actualSize / 2),
+      child: Semantics(
+        button: true,
+        enabled: widget.isEnabled,
+        label: accessibilityLabel,
+        hint: _createDetailedHint(),
+        liveRegion: widget.isListening || widget.isProcessing,
+        child: InkWell(
+          onTap: widget.isEnabled ? _handleActivation : null,
+          focusNode: _focusNode,
+          borderRadius: BorderRadius.circular(actualSize / 2),
+          child: Container(
+            width: actualSize,
+            height: actualSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: _isKeyboardFocused 
+                  ? Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 3.0,
+                    )
+                  : null,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
             // Ripple effect for processing state
             if (widget.isProcessing)
               AnimatedBuilder(
@@ -184,11 +260,13 @@ class _VoiceInputButtonState extends State<VoiceInputButton>
                         ),
                       ],
                     ),
-                    child: Icon(
-                      icon,
-                      size: widget.size * 0.4,
-                      color: Colors.white,
-                    ),
+                    child: widget.isProcessing
+                        ? _buildProcessingIcon()
+                        : Icon(
+                            icon,
+                            size: widget.size * 0.4,
+                            color: Colors.white,
+                          ),
                   ),
                 );
               },
@@ -206,32 +284,49 @@ class _VoiceInputButtonState extends State<VoiceInputButton>
     );
   }
 
+  Widget _buildProcessingIcon() {
+    return AnimatedBuilder(
+      animation: _rippleController,
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: _rippleController.value * 2 * pi,
+          child: Icon(
+            Icons.sync,
+            size: widget.size * 0.4,
+            color: Colors.white,
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildVoiceLevelIndicator() {
     return Container(
-      width: widget.size * 0.8,
-      height: 4,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(2),
-        color: Colors.white.withOpacity(0.3),
-      ),
-      child: AnimatedBuilder(
-        animation: _pulseController,
-        builder: (context, child) {
-          // Simulate voice level with animation
-          final level = (_pulseAnimation.value - 1.0) * 5 + 0.3;
-          
-          return Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: (widget.size * 0.8) * level.clamp(0.0, 1.0),
-              height: 4,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(2),
-                color: Colors.white,
-              ),
-            ),
+      width: widget.size * 0.9,
+      height: 6,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(5, (index) {
+          return AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              // Create wave effect with different frequencies for each bar
+              final frequency = 1.0 + (index * 0.3);
+              final phase = (_pulseController.value * 2 * 3.14159 * frequency) + (index * 0.5);
+              final amplitude = (0.3 + 0.7 * (sin(phase).abs())) * 
+                               (1.0 - (index * 0.1)); // Diminishing effect
+              
+              return Container(
+                width: 2,
+                height: 6 * amplitude.clamp(0.2, 1.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(1),
+                  color: Colors.white.withOpacity(0.9),
+                ),
+              );
+            },
           );
-        },
+        }),
       ),
     );
   }

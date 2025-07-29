@@ -26,6 +26,9 @@ abstract class NotificationRepository {
   /// Create a new notification
   Future<int> createNotification(TaskNotification notification);
 
+  /// Insert a new notification (alias for createNotification)
+  Future<int> insertNotification(TaskNotification notification);
+
   /// Create multiple notifications for a task
   Future<List<int>> createNotificationsForTask(
     int taskId,
@@ -44,6 +47,9 @@ abstract class NotificationRepository {
 
   /// Delete all notifications for a task
   Future<void> deleteNotificationsByTask(int taskId);
+
+  /// Delete all notifications for a task by task ID (alias)
+  Future<void> deleteNotificationsByTaskId(int taskId);
 
   /// Bulk delete notifications
   Future<void> bulkDeleteNotifications(List<int> notificationIds);

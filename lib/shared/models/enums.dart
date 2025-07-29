@@ -55,3 +55,47 @@ enum NotificationType {
     );
   }
 }
+
+/// Reminder interval enum (used for notification preferences)
+enum ReminderInterval {
+  oneHour,
+  sixHours,
+  twelveHours,
+  oneDay,
+}
+
+extension ReminderIntervalExtension on ReminderInterval {
+  String get displayName {
+    switch (this) {
+      case ReminderInterval.oneHour:
+        return '1 hour before';
+      case ReminderInterval.sixHours:
+        return '6 hours before';
+      case ReminderInterval.twelveHours:
+        return '12 hours before';
+      case ReminderInterval.oneDay:
+        return '1 day before';
+    }
+  }
+  
+  Duration get duration {
+    switch (this) {
+      case ReminderInterval.oneHour:
+        return const Duration(hours: 1);
+      case ReminderInterval.sixHours:
+        return const Duration(hours: 6);
+      case ReminderInterval.twelveHours:
+        return const Duration(hours: 12);
+      case ReminderInterval.oneDay:
+        return const Duration(days: 1);
+    }
+  }
+}
+
+/// Notification priority levels
+enum NotificationPriority {
+  low,
+  medium,
+  high,
+  urgent,
+}

@@ -3,3 +3,6 @@
 
 export 'task.dart';
 export 'category.dart';
+export 'notification.dart';
+export 'notification_preferences.dart';
+export 'enums.dart';

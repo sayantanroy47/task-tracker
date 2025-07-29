@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/constants.dart';
+import '../../core/services/accessibility_service.dart';
 import '../models/models.dart';
 import 'category_chip.dart';
 
@@ -38,29 +39,44 @@ class _TaskListItemState extends State<TaskListItem>
   late AnimationController _swipeController;
   late Animation<double> _completionAnimation;
   late Animation<Offset> _swipeAnimation;
+  
+  // Accessibility support
+  final FocusNode _focusNode = FocusNode();
+  late AccessibilityService _accessibilityService;
+  bool _isKeyboardActive = false;
 
   @override
   void initState() {
     super.initState();
     
+    // Initialize accessibility service
+    _accessibilityService = AccessibilityService();
+    
     // Completion animation controller
     _completionController = AnimationController(
-      duration: AppDurations.taskCompletion,
+      duration: _accessibilityService.isReducedMotionEnabled 
+          ? const Duration(milliseconds: 100)
+          : AppDurations.taskCompletion,
       vsync: this,
     );
     
     // Swipe animation controller
     _swipeController = AnimationController(
-      duration: AppDurations.swipeAnimation,
+      duration: _accessibilityService.isReducedMotionEnabled 
+          ? const Duration(milliseconds: 100)
+          : AppDurations.swipeAnimation,
       vsync: this,
     );
     
+    // Focus handling for keyboard navigation
+    _focusNode.addListener(_onFocusChanged);
+    
     _completionAnimation = Tween<double>(
       begin: 1.0,
-      end: 0.0,
+      end: 1.1,
     ).animate(CurvedAnimation(
       parent: _completionController,
-      curve: Curves.easeInOut,
+      curve: Curves.elasticOut,
     ));
     
     _swipeAnimation = Tween<Offset>(
@@ -81,14 +97,22 @@ class _TaskListItemState extends State<TaskListItem>
   void dispose() {
     _completionController.dispose();
     _swipeController.dispose();
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onFocusChanged() {
+    setState(() {
+      _isKeyboardActive = _focusNode.hasFocus;
+    });
   }
 
   @override
   void didUpdateWidget(TaskListItem oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    // Handle completion state changes
+    // Only update animations if necessary to avoid rebuilds
     if (widget.task.isCompleted != oldWidget.task.isCompleted) {
       if (widget.task.isCompleted) {
         _completionController.forward();
@@ -98,9 +122,36 @@ class _TaskListItemState extends State<TaskListItem>
     }
   }
 
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TaskListItem &&
+        other.task.id == widget.task.id &&
+        other.task.isCompleted == widget.task.isCompleted &&
+        other.task.title == widget.task.title &&
+        other.task.dueDate == widget.task.dueDate &&
+        other.category?.id == widget.category?.id;
+  }
+
+  @override
+  int get hashCode => widget.task.id.hashCode;
+
   void _handleToggleComplete() {
-    // Provide haptic feedback
-    HapticFeedback.lightImpact();
+    // Provide accessible haptic feedback
+    _accessibilityService.provideFeedback(type: HapticFeedbackType.selectionClick);
+    
+    // Announce state change to screen reader
+    final newState = widget.task.isCompleted ? 'uncompleted' : 'completed';
+    _accessibilityService.announce('Task ${widget.task.title} $newState');
+    
+    // Add bounce animation for completion (respect reduced motion)
+    if (!widget.task.isCompleted && !_accessibilityService.isReducedMotionEnabled) {
+      _completionController.forward().then((_) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _completionController.reverse();
+        });
+      });
+    }
     
     if (widget.onToggleComplete != null) {
       final updatedTask = widget.task.isCompleted 
@@ -122,55 +173,98 @@ class _TaskListItemState extends State<TaskListItem>
     final theme = Theme.of(context);
     final isOverdue = widget.task.isOverdue;
     final isDueToday = widget.task.isDueToday;
+    final isHighContrast = _accessibilityService.isHighContrastEnabled;
     
-    // Color logic for visual hierarchy
+    // Color logic for visual hierarchy with high contrast support
     final backgroundColor = widget.task.isCompleted
-        ? theme.colorScheme.surfaceVariant.withOpacity(0.5)
+        ? (isHighContrast 
+            ? theme.colorScheme.surfaceVariant.withOpacity(0.8)
+            : theme.colorScheme.surfaceVariant.withOpacity(0.5))
         : isOverdue
-            ? AppColors.error.withOpacity(0.1)
+            ? (isHighContrast 
+                ? AppColors.error.withOpacity(0.2)
+                : AppColors.error.withOpacity(0.1))
             : isDueToday
-                ? AppColors.warning.withOpacity(0.1)
+                ? (isHighContrast 
+                    ? AppColors.warning.withOpacity(0.2)
+                    : AppColors.warning.withOpacity(0.1))
                 : theme.colorScheme.surface;
     
     final borderColor = widget.task.isCompleted
-        ? AppColors.success.withOpacity(0.3)
+        ? (isHighContrast 
+            ? AppColors.success.withOpacity(0.6)
+            : AppColors.success.withOpacity(0.3))
         : isOverdue
-            ? AppColors.error.withOpacity(0.3)
+            ? (isHighContrast 
+                ? AppColors.error.withOpacity(0.6)
+                : AppColors.error.withOpacity(0.3))
             : isDueToday
-                ? AppColors.warning.withOpacity(0.3)
+                ? (isHighContrast 
+                    ? AppColors.warning.withOpacity(0.6)
+                    : AppColors.warning.withOpacity(0.3))
                 : Colors.transparent;
 
-    return AnimatedBuilder(
-      animation: _completionAnimation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: widget.task.isCompleted ? 0.6 : 1.0,
-          child: SlideTransition(
-            position: _swipeAnimation,
-            child: Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: borderColor, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.shadow,
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
+    // Enhanced border for keyboard focus
+    final focusBorderColor = _isKeyboardActive 
+        ? theme.colorScheme.primary
+        : borderColor;
+
+    // Create accessible semantic description
+    final semanticLabel = _createSemanticLabel();
+    final semanticHint = _createSemanticHint();
+
+    return _accessibilityService.createFocusWrapper(
+      focusNode: _focusNode,
+      focusColor: theme.colorScheme.primary,
+      borderWidth: 3.0,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: _accessibilityService.makeAccessible(
+        semanticLabel: semanticLabel,
+        semanticHint: semanticHint,
+        isButton: true,
+        isSelected: widget.task.isCompleted,
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _completionAnimation,
+          builder: (context, child) {
+            final scale = _accessibilityService.isReducedMotionEnabled 
+                ? 1.0 
+                : _completionAnimation.value;
+            
+            return Transform.scale(
+              scale: scale,
+              child: Opacity(
+                opacity: widget.task.isCompleted ? 0.7 : 1.0,
+                child: SlideTransition(
+                  position: _swipeAnimation,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: focusBorderColor, 
+                        width: _isKeyboardActive ? 3 : 1,
+                      ),
+                      boxShadow: isHighContrast ? [] : [
+                        BoxShadow(
+                          color: AppColors.shadow,
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: _buildKeyboardNavigableContent(),
                   ),
-                ],
+                ),
               ),
-              child: widget.enableSwipeActions
-                  ? _buildSwipeWrapper()
-                  : _buildTaskContent(),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -206,37 +300,128 @@ class _TaskListItemState extends State<TaskListItem>
     
     return Container(
       decoration: BoxDecoration(
-        color: color,
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.8),
+            color,
+          ],
+          begin: isEdit ? Alignment.centerLeft : Alignment.centerRight,
+          end: isEdit ? Alignment.centerRight : Alignment.centerLeft,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       alignment: isEdit ? Alignment.centerLeft : Alignment.centerRight,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            label,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+      child: AnimatedScale(
+        scale: 1.0,
+        duration: AppDurations.fast,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              label,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  /// Build keyboard navigable content
+  Widget _buildKeyboardNavigableContent() {
+    if (widget.enableSwipeActions && !_isKeyboardActive) {
+      return _buildSwipeWrapper();
+    } else {
+      return _buildTaskContent();
+    }
+  }
+
+  /// Create comprehensive semantic label for screen readers
+  String _createSemanticLabel() {
+    final buffer = StringBuffer();
+    
+    // Task completion status
+    buffer.write(widget.task.isCompleted ? 'Completed task: ' : 'Task: ');
+    
+    // Task title
+    buffer.write(widget.task.title);
+    
+    // Task description if present
+    if (widget.task.description != null && widget.task.description!.isNotEmpty) {
+      buffer.write('. Description: ${widget.task.description}');
+    }
+    
+    // Due date information
+    if (widget.task.dueDateTimeDisplay != null) {
+      buffer.write('. Due: ${widget.task.dueDateTimeDisplay}');
+      
+      if (widget.task.isOverdue) {
+        buffer.write(' (Overdue)');
+      } else if (widget.task.isDueToday) {
+        buffer.write(' (Due today)');
+      }
+    }
+    
+    // Category information
+    if (widget.showCategory && widget.category != null) {
+      buffer.write('. Category: ${widget.category!.name}');
+    }
+    
+    // Task source
+    if (widget.task.source != TaskSource.manual) {
+      buffer.write('. Created via ${widget.task.source.name}');
+    }
+    
+    return buffer.toString();
+  }
+
+  /// Create semantic hint for screen reader interactions
+  String _createSemanticHint() {
+    final hints = <String>[];
+    
+    if (widget.task.isCompleted) {
+      hints.add('Double tap to mark as incomplete');
+    } else {
+      hints.add('Double tap to mark as complete');
+    }
+    
+    if (widget.onEdit != null) {
+      hints.add('Swipe right to edit');
+    }
+    
+    if (widget.enableSwipeActions) {
+      hints.add('Swipe left to complete');
+    }
+    
+    return hints.join('. ');
   }
 
   Widget _buildTaskContent() {
     return InkWell(
       onTap: widget.onTap,
+      focusNode: _focusNode,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Padding(
+      child: Container(
+        constraints: BoxConstraints(
+          minHeight: _accessibilityService.minTouchTargetSize,
+        ),
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
@@ -253,9 +438,11 @@ class _TaskListItemState extends State<TaskListItem>
                   // Task title
                   Text(
                     widget.task.title,
-                    style: widget.task.isCompleted
+                    style: (widget.task.isCompleted
                         ? AppTextStyles.withStrikethrough(AppTextStyles.taskTitle)
-                        : AppTextStyles.taskTitle,
+                        : AppTextStyles.taskTitle).copyWith(
+                      fontSize: AppTextStyles.taskTitle.fontSize! * _accessibilityService.textScaleFactor,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -342,31 +529,69 @@ class _TaskListItemState extends State<TaskListItem>
   }
 
   Widget _buildCompletionCheckbox() {
-    return GestureDetector(
-      onTap: _handleToggleComplete,
-      child: AnimatedContainer(
-        duration: AppDurations.fast,
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          color: widget.task.isCompleted 
-              ? AppColors.success 
-              : Colors.transparent,
-          border: Border.all(
-            color: widget.task.isCompleted 
-                ? AppColors.success 
-                : Theme.of(context).colorScheme.outline,
-            width: 2,
+    final checkboxSize = _accessibilityService.minTouchTargetSize.clamp(24.0, 32.0);
+    final iconSize = checkboxSize * 0.6;
+    
+    return Semantics(
+      label: widget.task.isCompleted ? 'Task completed' : 'Task not completed',
+      hint: 'Double tap to ${widget.task.isCompleted ? 'uncomplete' : 'complete'} task',
+      button: true,
+      toggled: widget.task.isCompleted,
+      child: GestureDetector(
+        onTap: _handleToggleComplete,
+        child: Container(
+          width: checkboxSize,
+          height: checkboxSize,
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: Center(
+            child: AnimatedContainer(
+              duration: _accessibilityService.isReducedMotionEnabled 
+                  ? const Duration(milliseconds: 50)
+                  : AppDurations.fast,
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: widget.task.isCompleted 
+                    ? AppColors.success 
+                    : Colors.transparent,
+                border: Border.all(
+                  color: widget.task.isCompleted 
+                      ? AppColors.success 
+                      : (_accessibilityService.isHighContrastEnabled
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Theme.of(context).colorScheme.outline),
+                  width: _accessibilityService.isHighContrastEnabled ? 3 : 2,
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: widget.task.isCompleted
+                  ? (_accessibilityService.isReducedMotionEnabled
+                      ? Icon(
+                          Icons.check,
+                          size: iconSize,
+                          color: Colors.white,
+                        )
+                      : TweenAnimationBuilder<double>(
+                          duration: AppDurations.fast,
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: value,
+                              child: Icon(
+                                Icons.check,
+                                size: iconSize,
+                                color: Colors.white,
+                              ),
+                            );
+                          },
+                        ))
+                  : null,
+            ),
+          ),
         ),
-        child: widget.task.isCompleted
-            ? const Icon(
-                Icons.check,
-                size: 16,
-                color: Colors.white,
-              )
-            : null,
       ),
     );
   }

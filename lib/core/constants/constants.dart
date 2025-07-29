@@ -1,4 +1,5 @@
 // Barrel export file for all app constants
+export 'accessibility_colors.dart';
 export 'app_colors.dart';
 export 'app_text_styles.dart';
 export 'app_spacing.dart';

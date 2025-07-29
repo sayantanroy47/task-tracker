@@ -12,25 +12,25 @@ abstract class CategoryRepository {
   Future<List<Category>> getUserCategories();
 
   /// Get category by ID
-  Future<Category?> getCategoryById(int id);
+  Future<Category?> getCategoryById(String id);
 
   /// Get category by name
   Future<Category?> getCategoryByName(String name);
 
   /// Create a new category
-  Future<int> createCategory(Category category);
+  Future<Category> createCategory(Category category);
 
   /// Update an existing category
   Future<void> updateCategory(Category category);
 
   /// Delete a category (only user-created categories)
-  Future<void> deleteCategory(int id);
+  Future<void> deleteCategory(String id);
 
   /// Check if category can be deleted (not system category and no tasks)
-  Future<bool> canDeleteCategory(int id);
+  Future<bool> canDeleteCategory(String id);
 
   /// Get category usage count (number of tasks)
-  Future<int> getCategoryUsageCount(int id);
+  Future<int> getCategoryUsageCount(String id);
 
   /// Get categories with usage statistics
   Future<List<CategoryWithUsage>> getCategoriesWithUsage();

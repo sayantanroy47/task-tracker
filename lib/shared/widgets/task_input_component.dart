@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/constants.dart';
+import '../../core/services/accessibility_service.dart';
 import '../models/models.dart';
 import 'category_chip.dart';
 
@@ -52,10 +54,17 @@ class _TaskInputComponentState extends State<TaskInputComponent> {
   final _titleFocusNode = FocusNode();
   final _descriptionFocusNode = FocusNode();
   bool _showAdvancedOptions = false;
+  
+  // Accessibility support
+  late AccessibilityService _accessibilityService;
+  final Map<LogicalKeySet, VoidCallback> _shortcuts = {};
 
   @override
   void initState() {
     super.initState();
+    
+    // Initialize accessibility service
+    _accessibilityService = AccessibilityService();
     
     _titleController = TextEditingController(
       text: widget.initialText ?? widget.initialTask?.title ?? '',
@@ -73,9 +82,12 @@ class _TaskInputComponentState extends State<TaskInputComponent> {
     
     _showAdvancedOptions = widget.showAdvancedOptions;
     
-    // Auto-focus title field
+    // Setup keyboard shortcuts
+    _setupKeyboardShortcuts();
+    
+    // Auto-focus title field with accessibility consideration
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!widget.isVoiceInput) {
+      if (!widget.isVoiceInput && !_accessibilityService.isScreenReaderEnabled) {
         _titleFocusNode.requestFocus();
       }
     });
@@ -111,17 +123,43 @@ class _TaskInputComponentState extends State<TaskInputComponent> {
     super.dispose();
   }
 
+  /// Setup keyboard shortcuts for accessibility
+  void _setupKeyboardShortcuts() {
+    _shortcuts[LogicalKeySet(LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.keyS)] = _handleSave;
+    _shortcuts[LogicalKeySet(LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.enter)] = _handleSave;
+    _shortcuts[LogicalKeySet(LogicalKeyboardKey.escape)] = () => widget.onCancel?.call();
+    _shortcuts[LogicalKeySet(LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.digit1)] = () => _selectQuickDate(DateTime.now());
+    _shortcuts[LogicalKeySet(LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.digit2)] = () => _selectQuickDate(DateTime.now().add(const Duration(days: 1)));
+  }
+
+  void _selectQuickDate(DateTime date) {
+    setState(() {
+      _selectedDueDate = date;
+      _selectedDueTime = null;
+    });
+    _accessibilityService.announce('Due date set to ${DateFormat('MMM d').format(date)}');
+  }
+
   void _handleSave() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
+      _accessibilityService.announce('Error: Please enter a task title');
+      _accessibilityService.provideFeedback(type: HapticFeedbackType.heavyImpact);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a task title'),
           backgroundColor: AppColors.error,
         ),
       );
+      
+      // Focus title field for screen reader users
+      _titleFocusNode.requestFocus();
       return;
     }
+
+    // Provide success feedback
+    _accessibilityService.provideFeedback(type: HapticFeedbackType.mediumImpact);
 
     final dueDateTime = _selectedDueDate != null && _selectedDueTime != null
         ? DateTime(
@@ -172,7 +210,9 @@ class _TaskInputComponentState extends State<TaskInputComponent> {
     final theme = Theme.of(context);
     final isEditing = widget.initialTask != null;
     
-    return Container(
+    return KeyboardShortcuts(
+      shortcuts: _shortcuts,
+      child: Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
@@ -210,26 +250,38 @@ class _TaskInputComponentState extends State<TaskInputComponent> {
               ],
             ),
             
-            // Title input
-            TextField(
-              controller: _titleController,
-              focusNode: _titleFocusNode,
-              decoration: const InputDecoration(
-                labelText: 'Task title',
-                hintText: 'What do you need to do?',
-                prefixIcon: Icon(Icons.task_alt),
+            // Title input with enhanced accessibility
+            Semantics(
+              label: 'Task title input field',
+              hint: 'Enter what you need to do. Required field.',
+              textField: true,
+              child: TextField(
+                controller: _titleController,
+                focusNode: _titleFocusNode,
+                decoration: InputDecoration(
+                  labelText: 'Task title *',
+                  hintText: 'What do you need to do?',
+                  prefixIcon: const Icon(Icons.task_alt),
+                  helperText: _accessibilityService.isScreenReaderEnabled 
+                      ? 'Keyboard shortcut: Press Tab to move to description' 
+                      : null,
+                ),
+                textInputAction: TextInputAction.next,
+                onSubmitted: (_) => _descriptionFocusNode.requestFocus(),
+                maxLength: 100,
+                style: TextStyle(
+                  fontSize: AppTextStyles.bodyMedium.fontSize! * _accessibilityService.textScaleFactor,
+                ),
+                buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
+                  return (isFocused || _accessibilityService.isScreenReaderEnabled) && maxLength != null
+                      ? Text(
+                          '$currentLength of $maxLength characters',
+                          style: AppTextStyles.caption,
+                          semanticsLabel: '$currentLength of $maxLength characters used',
+                        )
+                      : null;
+                },
               ),
-              textInputAction: TextInputAction.next,
-              onSubmitted: (_) => _descriptionFocusNode.requestFocus(),
-              maxLength: 100,
-              buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
-                return isFocused && maxLength != null
-                    ? Text(
-                        '$currentLength/$maxLength',
-                        style: AppTextStyles.caption,
-                      )
-                    : null;
-              },
             ),
             
             const SizedBox(height: AppSpacing.md),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants/constants.dart';
+import 'core/navigation/navigation.dart';
 import 'features/tasks/task_screen.dart';
 import 'shared/providers/app_providers.dart';
 
@@ -13,14 +14,52 @@ class TaskTrackerApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp(
+    final router = ref.watch(routerProvider);
+    
+    return MaterialApp.router(
       title: 'Task Tracker',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const AppBootstrap(),
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        // Wrap with app initialization logic
+        return _AppInitializer(child: child ?? const SizedBox.shrink());
+      },
     );
+  }
+}
+
+/// App initializer widget that handles bootstrap logic
+class _AppInitializer extends ConsumerStatefulWidget {
+  final Widget child;
+  
+  const _AppInitializer({required this.child});
+
+  @override
+  ConsumerState<_AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends ConsumerState<_AppInitializer> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize app state on startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(appStateProvider.notifier).initialize();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = ref.watch(appStateProvider);
+    
+    return switch (appState) {
+      AppStateLoading() => const AppLoadingScreen(),
+      AppStateReady() => widget.child,
+      AppStateError(:final message) => AppErrorScreen(message: message),
+    };
   }
 }
 
