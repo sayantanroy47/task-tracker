@@ -66,6 +66,9 @@ class Category {
     };
   }
 
+  /// Convert to JSON for API compatibility
+  Map<String, dynamic> toJson() => toMap();
+
   /// Create from Map (database)
   factory Category.fromMap(Map<String, dynamic> map) {
     return Category(
@@ -77,6 +80,9 @@ class Category {
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
     );
   }
+
+  /// Create from JSON (API compatibility)
+  factory Category.fromJson(Map<String, dynamic> json) => Category.fromMap(json);
 
   /// Get default system categories
   static List<Category> getDefaultCategories() {

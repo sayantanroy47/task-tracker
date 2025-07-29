@@ -9,6 +9,10 @@ class AppSpacing {
   static const double xl = 32.0;  // Extra large - section spacing
   static const double xxl = 48.0; // Extra extra large - screen spacing
   
+  // Legacy aliases for backward compatibility
+  static const double small = sm;
+  static const double medium = md;
+  
   // Component-specific spacing
   static const double cardPadding = md;
   static const double buttonPadding = sm;

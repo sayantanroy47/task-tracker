@@ -72,6 +72,18 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   return NotificationRepositoryImpl(databaseService);
 });
 
+/// All categories provider - provides list of all categories
+final allCategoriesProvider = FutureProvider<List<Category>>((ref) async {
+  final categoryRepository = ref.read(categoryRepositoryProvider);
+  return await categoryRepository.getAllCategories();
+});
+
+/// All tasks provider - provides list of all tasks
+final tasksProvider = FutureProvider<List<Task>>((ref) async {
+  final taskRepository = ref.read(taskRepositoryProvider);
+  return await taskRepository.getAllTasks();
+});
+
 /// App initialization provider that handles startup tasks
 final appInitializationProvider = FutureProvider<void>((ref) async {
   // Initialize database service first

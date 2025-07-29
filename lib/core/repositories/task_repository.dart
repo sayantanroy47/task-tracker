@@ -6,7 +6,7 @@ abstract class TaskRepository {
   Future<List<Task>> getAllTasks();
 
   /// Get tasks by category
-  Future<List<Task>> getTasksByCategory(int categoryId);
+  Future<List<Task>> getTasksByCategory(String categoryId);
 
   /// Get tasks by date
   Future<List<Task>> getTasksByDate(DateTime date);
@@ -24,34 +24,34 @@ abstract class TaskRepository {
   Future<List<Task>> getOverdueTasks();
 
   /// Get task by ID
-  Future<Task?> getTaskById(int id);
+  Future<Task?> getTaskById(String id);
 
   /// Search tasks by title or description
   Future<List<Task>> searchTasks(String query);
 
   /// Create a new task
-  Future<int> createTask(Task task);
+  Future<String> createTask(Task task);
 
   /// Update an existing task
   Future<void> updateTask(Task task);
 
   /// Delete a task
-  Future<void> deleteTask(int id);
+  Future<void> deleteTask(String id);
 
   /// Toggle task completion status
-  Future<void> toggleTaskCompletion(int id);
+  Future<void> toggleTaskCompletion(String id);
 
   /// Mark task as completed
-  Future<void> markTaskCompleted(int id);
+  Future<void> markTaskCompleted(String id);
 
   /// Bulk update tasks
   Future<void> bulkUpdateTasks(List<Task> tasks);
 
   /// Bulk delete tasks
-  Future<void> bulkDeleteTasks(List<int> taskIds);
+  Future<void> bulkDeleteTasks(List<String> taskIds);
 
   /// Get task count by category
-  Future<Map<int, int>> getTaskCountByCategory();
+  Future<Map<String, int>> getTaskCountByCategory();
 
   /// Get task completion statistics
   Future<Map<String, int>> getTaskStatistics();
@@ -63,7 +63,7 @@ abstract class TaskRepository {
   Stream<List<Task>> watchTasksByDate(DateTime date);
 
   /// Watch tasks by category (stream)
-  Stream<List<Task>> watchTasksByCategory(int categoryId);
+  Stream<List<Task>> watchTasksByCategory(String categoryId);
 
   /// Watch pending tasks (stream)
   Stream<List<Task>> watchPendingTasks();

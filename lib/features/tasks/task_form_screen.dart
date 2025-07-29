@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../shared/widgets/task_input_component.dart';
 import '../../core/navigation/navigation_service.dart';
+import '../../shared/providers/app_providers.dart';
+import '../../shared/models/models.dart';
 import 'providers/task_providers.dart';
 
 /// Screen for creating or editing tasks
@@ -22,6 +24,7 @@ class TaskFormScreen extends ConsumerStatefulWidget {
 class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
+  Task? _task;
   
   bool get isEditing => widget.taskId != null;
   
@@ -150,7 +153,42 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           children: [
             if (!isEditing) ...[
               // Use the existing TaskInputComponent for new tasks
-              const TaskInputComponent(),
+              Consumer(
+                builder: (context, ref, child) {
+                  final categoriesAsync = ref.watch(allCategoriesProvider);
+                  return categoriesAsync.when(
+                    data: (categories) => TaskInputComponent(
+                      categories: categories,
+                      initialTask: _task,
+                      onTaskCreated: (task) async {
+                        final taskRepository = ref.read(taskRepositoryProvider);
+                        await taskRepository.createTask(task);
+                        ref.invalidate(tasksProvider);
+                        if (context.mounted) {
+                          context.pop();
+                        }
+                      },
+                      onTaskUpdated: (task) async {
+                        final taskRepository = ref.read(taskRepositoryProvider);
+                        await taskRepository.updateTask(task);
+                        ref.invalidate(tasksProvider);
+                        if (context.mounted) {
+                          context.pop();
+                        }
+                      },
+                      onCancel: () {
+                        if (context.mounted) {
+                          context.pop();
+                        }
+                      },
+                    ),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (error, stack) => Center(
+                      child: Text('Error loading categories: $error'),
+                    ),
+                  );
+                },
+              ),
             ] else ...[
               // Simple form for editing
               TextField(

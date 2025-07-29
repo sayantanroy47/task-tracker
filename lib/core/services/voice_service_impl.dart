@@ -42,7 +42,7 @@ class VoiceServiceImpl implements VoiceService {
     if (!_isInitialized) {
       await initialize();
     }
-    return _isInitialized && await _speech.isAvailable();
+    return _isInitialized && _speech.isAvailable;
   }
   
   @override
@@ -161,7 +161,7 @@ class VoiceServiceImpl implements VoiceService {
   
   // Private helper methods
   
-  void _handleSpeechResult(stt.SpeechRecognitionResult result) {
+  void _handleSpeechResult(result) {
     _lastConfidence = result.confidence;
     
     if (result.finalResult) {
@@ -171,7 +171,7 @@ class VoiceServiceImpl implements VoiceService {
     }
   }
   
-  void _handleError(stt.SpeechRecognitionError error) {
+  void _handleError(error) {
     _isListening = false;
     _onError?.call('Speech recognition error: ${error.errorMsg}');
   }

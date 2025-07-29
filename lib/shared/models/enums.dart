@@ -1,19 +1,36 @@
 /// Task priority levels
-enum Priority {
-  low(1, 'Low'),
-  medium(2, 'Medium'),
-  high(3, 'High');
+enum TaskPriority {
+  low,
+  medium,
+  high,
+  urgent,
+}
 
-  const Priority(this.value, this.label);
-
-  final int value;
-  final String label;
-
-  static Priority fromValue(int value) {
-    return Priority.values.firstWhere(
-      (priority) => priority.value == value,
-      orElse: () => Priority.low,
-    );
+extension TaskPriorityExtension on TaskPriority {
+  String get displayName {
+    switch (this) {
+      case TaskPriority.low:
+        return 'Low';
+      case TaskPriority.medium:
+        return 'Medium';
+      case TaskPriority.high:
+        return 'High';
+      case TaskPriority.urgent:
+        return 'Urgent';
+    }
+  }
+  
+  int get value {
+    switch (this) {
+      case TaskPriority.low:
+        return 1;
+      case TaskPriority.medium:
+        return 2;
+      case TaskPriority.high:
+        return 3;
+      case TaskPriority.urgent:
+        return 4;
+    }
   }
 }
 
@@ -21,7 +38,8 @@ enum Priority {
 enum TaskSource {
   manual('manual', 'Manual'),
   voice('voice', 'Voice'),
-  chat('chat', 'Chat');
+  chat('chat', 'Chat'),
+  calendar('calendar', 'Calendar');
 
   const TaskSource(this.value, this.label);
 

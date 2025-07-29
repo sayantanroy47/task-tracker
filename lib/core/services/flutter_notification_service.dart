@@ -7,6 +7,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'notification_service.dart';
 import 'notification_preferences_service.dart';
 import '../../shared/models/notification_preferences.dart';
+import '../../shared/models/enums.dart';
 
 /// Flutter Local Notifications implementation of NotificationService
 /// Handles cross-platform local notifications for task reminders
@@ -52,21 +53,21 @@ class FlutterNotificationService implements NotificationService {
         DarwinNotificationCategory(
           'task_reminder',
           actions: [
-            DarwinNotificationAction.plain(
+            const DarwinNotificationAction.plain(
               'complete',
               'Complete',
               options: {
                 DarwinNotificationActionOption.foreground,
               },
             ),
-            DarwinNotificationAction.plain(
+            const DarwinNotificationAction.plain(
               'snooze',
               'Snooze',
               options: {
                 DarwinNotificationActionOption.destructive,
               },
             ),
-            DarwinNotificationAction.plain(
+            const DarwinNotificationAction.plain(
               'reschedule',
               'Reschedule',
               options: {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'enums.dart';
 
 /// Task model representing a single task item
 /// Optimized for forgetful users with clear status and scheduling
@@ -271,69 +272,3 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json) => Task.fromMap(json);
 }
 
-/// Task priority levels
-enum TaskPriority {
-  low,
-  medium,
-  high,
-  urgent,
-}
-
-/// Task source indicating how the task was created
-enum TaskSource {
-  manual,    // Created manually by user
-  voice,     // Created via voice input
-  chat,      // Extracted from chat message
-  calendar,  // Created from calendar integration
-}
-
-/// Reminder interval options for notifications
-enum ReminderInterval {
-  oneHour,     // 1 hour before due time
-  sixHours,    // 6 hours before due time
-  twelveHours, // 12 hours before due time
-  oneDay,      // 1 day before due date
-}
-
-extension ReminderIntervalExtension on ReminderInterval {
-  String get displayName {
-    switch (this) {
-      case ReminderInterval.oneHour:
-        return '1 hour before';
-      case ReminderInterval.sixHours:
-        return '6 hours before';
-      case ReminderInterval.twelveHours:
-        return '12 hours before';
-      case ReminderInterval.oneDay:
-        return '1 day before';
-    }
-  }
-  
-  Duration get duration {
-    switch (this) {
-      case ReminderInterval.oneHour:
-        return const Duration(hours: 1);
-      case ReminderInterval.sixHours:
-        return const Duration(hours: 6);
-      case ReminderInterval.twelveHours:
-        return const Duration(hours: 12);
-      case ReminderInterval.oneDay:
-        return const Duration(days: 1);
-    }
-  }
-}
-
-extension TaskPriorityExtension on TaskPriority {
-  String get displayName {
-    switch (this) {
-      case TaskPriority.low:
-        return 'Low';
-      case TaskPriority.medium:
-        return 'Medium';
-      case TaskPriority.high:
-        return 'High';
-      case TaskPriority.urgent:
-        return 'Urgent';
-    }
-  }
-}

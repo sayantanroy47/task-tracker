@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../shared/models/models.dart';
 import '../task_repository.dart';
@@ -24,7 +25,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<List<Task>> getTasksByCategory(int categoryId) async {
+  Future<List<Task>> getTasksByCategory(String categoryId) async {
     final db = await _database;
     final List<Map<String, dynamic>> maps = await db.query(
       'tasks',
@@ -111,7 +112,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<Task?> getTaskById(int id) async {
+  Future<Task?> getTaskById(String id) async {
     final db = await _database;
     final List<Map<String, dynamic>> maps = await db.query(
       'tasks',
@@ -242,14 +243,13 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<int> createTask(Task task) async {
+  Future<String> createTask(Task task) async {
     final db = await _database;
     final taskData = task.toMap();
-    taskData.remove('id'); // Remove id for auto-increment
     
-    final id = await db.insert('tasks', taskData);
+    await db.insert('tasks', taskData);
     _notifyTasksChanged();
-    return id;
+    return task.id;
   }
 
   @override
@@ -267,7 +267,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<void> deleteTask(int id) async {
+  Future<void> deleteTask(String id) async {
     final db = await _database;
     await db.delete(
       'tasks',
@@ -278,11 +278,11 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<void> toggleTaskCompletion(int id) async {
+  Future<void> toggleTaskCompletion(String id) async {
     final task = await getTaskById(id);
     if (task != null) {
       final updatedTask = task.copyWith(
-        completed: !task.completed,
+        isCompleted: !task.isCompleted,
         updatedAt: DateTime.now(),
       );
       await updateTask(updatedTask);
@@ -290,11 +290,11 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<void> markTaskCompleted(int id) async {
+  Future<void> markTaskCompleted(String id) async {
     final task = await getTaskById(id);
-    if (task != null && !task.completed) {
+    if (task != null && !task.isCompleted) {
       final updatedTask = task.copyWith(
-        completed: true,
+        isCompleted: true,
         updatedAt: DateTime.now(),
       );
       await updateTask(updatedTask);
@@ -320,7 +320,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<void> bulkDeleteTasks(List<int> taskIds) async {
+  Future<void> bulkDeleteTasks(List<String> taskIds) async {
     final db = await _database;
     final batch = db.batch();
     
@@ -337,7 +337,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<Map<int, int>> getTaskCountByCategory() async {
+  Future<Map<String, int>> getTaskCountByCategory() async {
     final db = await _database;
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT category_id, COUNT(*) as count
@@ -345,9 +345,9 @@ class TaskRepositoryImpl implements TaskRepository {
       GROUP BY category_id
     ''');
     
-    final result = <int, int>{};
+    final result = <String, int>{};
     for (final map in maps) {
-      result[map['category_id'] as int] = map['count'] as int;
+      result[map['category_id'] as String] = map['count'] as int;
     }
     return result;
   }
@@ -390,7 +390,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Stream<List<Task>> watchTasksByCategory(int categoryId) {
+  Stream<List<Task>> watchTasksByCategory(String categoryId) {
     return watchAllTasks().asyncMap((_) => getTasksByCategory(categoryId));
   }
 

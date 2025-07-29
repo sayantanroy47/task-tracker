@@ -76,7 +76,7 @@ class TaskNotificationManager {
       'action': 'reminder',
       'intervalIndex': intervalIndex,
       'dueDate': task.dueDate?.toIso8601String(),
-      'dueTime': task.dueTime?.toIso8601String(),
+      'dueTime': task.dueTime != null ? '${task.dueTime!.hour}:${task.dueTime!.minute}' : null,
     });
 
     // Create notification title and body
@@ -178,7 +178,7 @@ class TaskNotificationManager {
 
   /// Complete task from notification action
   Future<void> _completeTaskFromNotification(String taskId) async {
-    final task = await _taskRepository.getTaskById(taskId);
+    final task = await _taskRepository.getTaskById(int.tryParse(taskId) ?? 0);
     if (task != null) {
       final completedTask = task.complete();
       await _taskRepository.updateTask(completedTask);
@@ -191,7 +191,7 @@ class TaskNotificationManager {
     final snoozeTime = DateTime.now().add(const Duration(minutes: 10));
     final intervalIndex = payloadData['intervalIndex'] as int? ?? 0;
     
-    final task = await _taskRepository.getTaskById(taskId);
+    final task = await _taskRepository.getTaskById(int.tryParse(taskId) ?? 0);
     if (task != null) {
       final notificationId = _generateNotificationId(taskId, intervalIndex);
       

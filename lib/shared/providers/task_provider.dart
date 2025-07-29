@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/core.dart';
 import '../models/models.dart';
@@ -69,7 +70,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
         description: 'Milk, bread, eggs, and vegetables',
         categoryId: categories[1].id, // Household
         dueDate: now,
-        dueTime: DateTime(now.year, now.month, now.day, 15, 0), // 3:00 PM
+        dueTime: const TimeOfDay(hour: 15, minute: 0), // 3:00 PM
         priority: TaskPriority.medium,
         hasReminder: true,
         reminderIntervals: [ReminderInterval.oneHour],
@@ -86,7 +87,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
         description: 'Complete slides and practice presentation',
         categoryId: categories[2].id, // Work
         dueDate: tomorrow,
-        dueTime: DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0), // 9:00 AM
+        dueTime: const TimeOfDay(hour: 9, minute: 0), // 9:00 AM
         priority: TaskPriority.urgent,
         hasReminder: true,
         reminderIntervals: [ReminderInterval.oneDay, ReminderInterval.oneHour],
