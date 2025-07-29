@@ -11,3 +11,7 @@ export 'intent_handler_service.dart';
 export 'flutter_notification_service.dart';
 export 'task_notification_manager.dart';
 export 'notification_preferences_service.dart';
+export 'search_service.dart';
+export 'analytics_service.dart';
+export 'export_service.dart';
+export 'intent_handler_provider.dart';

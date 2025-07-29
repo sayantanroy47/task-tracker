@@ -1,4 +1,6 @@
 /// Barrel export file for core functionality
+library;
+
 export 'services/database_service.dart';
 export 'services/notification_service.dart';
 export 'services/voice_service.dart';

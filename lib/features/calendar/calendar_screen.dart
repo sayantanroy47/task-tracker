@@ -18,16 +18,16 @@ class CalendarScreen extends ConsumerStatefulWidget {
   ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends ConsumerState<CalendarScreen> 
+class _CalendarScreenState extends ConsumerState<CalendarScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -49,10 +49,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         actions: [
           // Today button
           TextButton(
-            onPressed: () => ref.read(calendarStateProvider.notifier).goToToday(),
+            onPressed: () =>
+                ref.read(calendarStateProvider.notifier).goToToday(),
             child: const Text('Today'),
           ),
-          
+
           // View mode toggle
           PopupMenuButton<CalendarViewMode>(
             icon: const Icon(Icons.view_module),
@@ -93,31 +94,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
           ],
         ),
       ),
-      
       body: TabBarView(
         controller: _tabController,
         children: [
           // Calendar Tab
           _buildCalendarTab(context, selectedDate, tasksForDate),
-          
+
           // Agenda Tab
           _buildAgendaTab(context),
-          
+
           // Tasks Tab
           _buildTasksTab(context),
         ],
       ),
-      
       floatingActionButton: FloatingActionButton(
         onPressed: () => _createTaskForSelectedDate(context, selectedDate),
-        tooltip: 'Add task for ${DateTimeUtils.formatDateForDisplay(selectedDate)}',
+        tooltip:
+            'Add task for ${DateTimeUtils.formatDateForDisplay(selectedDate)}',
         child: const Icon(Icons.add),
       ),
     );
   }
 
   /// Build calendar tab with calendar widget and selected date tasks
-  Widget _buildCalendarTab(BuildContext context, DateTime selectedDate, List<Task> tasksForDate) {
+  Widget _buildCalendarTab(
+      BuildContext context, DateTime selectedDate, List<Task> tasksForDate) {
     return Column(
       children: [
         // Calendar widget
@@ -125,10 +126,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
           margin: const EdgeInsets.all(AppSpacing.medium),
           child: const CalendarWidget(),
         ),
-        
+
         // Divider
         const Divider(height: 1),
-        
+
         // Selected date header
         Container(
           padding: const EdgeInsets.all(AppSpacing.medium),
@@ -149,12 +150,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
               if (tasksForDate.isNotEmpty)
                 Chip(
                   label: Text('${tasksForDate.length}'),
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
                 ),
             ],
           ),
         ),
-        
+
         // Tasks for selected date
         Expanded(
           child: _buildTaskList(tasksForDate, selectedDate),
@@ -166,7 +168,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   /// Build agenda tab with chronological task view
   Widget _buildAgendaTab(BuildContext context) {
     final upcomingTasks = ref.watch(upcomingTasksProvider);
-    
+
     return upcomingTasks.when(
       data: (tasks) {
         if (tasks.isEmpty) {
@@ -181,25 +183,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             ),
           );
         }
-        
+
         // Group tasks by date
         final Map<DateTime, List<Task>> tasksByDate = {};
         for (final task in tasks) {
           if (task.dueDate != null) {
-            final dateKey = DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
+            final dateKey = DateTime(
+                task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
             tasksByDate.putIfAbsent(dateKey, () => []).add(task);
           }
         }
-        
+
         final sortedDates = tasksByDate.keys.toList()..sort();
-        
+
         return ListView.builder(
           padding: const EdgeInsets.all(AppSpacing.medium),
           itemCount: sortedDates.length,
           itemBuilder: (context, index) {
             final date = sortedDates[index];
             final dateTasks = tasksByDate[date]!;
-            
+
             return _buildAgendaDateSection(date, dateTasks);
           },
         );
@@ -214,7 +217,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   /// Build tasks tab with all tasks view
   Widget _buildTasksTab(BuildContext context) {
     final allTasks = ref.watch(allTasksProvider);
-    
+
     return allTasks.when(
       data: (tasks) => _buildTaskList(tasks, null),
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -228,7 +231,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   Widget _buildAgendaDateSection(DateTime date, List<Task> tasks) {
     final isToday = DateTimeUtils.isToday(date);
     final isPast = DateTimeUtils.isPastDay(date);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -263,18 +266,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
               const SizedBox(width: AppSpacing.small),
               Chip(
                 label: Text('${tasks.length}'),
-                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
             ],
           ),
         ),
-        
+
         // Tasks for this date
         ...tasks.map((task) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.small),
-          child: TaskListItem(task: task),
-        )),
-        
+              padding: const EdgeInsets.only(bottom: AppSpacing.small),
+              child: TaskListItem(task: task),
+            )),
+
         const SizedBox(height: AppSpacing.medium),
       ],
     );
@@ -286,7 +290,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       final message = filterDate != null
           ? 'No tasks for ${DateTimeUtils.formatDateForDisplay(filterDate)}'
           : 'No tasks found';
-          
+
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -306,7 +310,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             if (filterDate != null) ...[
               const SizedBox(height: AppSpacing.medium),
               ElevatedButton.icon(
-                onPressed: () => _createTaskForSelectedDate(context, filterDate),
+                onPressed: () =>
+                    _createTaskForSelectedDate(context, filterDate),
                 icon: const Icon(Icons.add),
                 label: const Text('Add Task'),
               ),
@@ -357,7 +362,7 @@ class _TaskCreationDialogState extends ConsumerState<TaskCreationDialog> {
   final _titleController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String _selectedCategoryId = 'personal';
-  
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -367,7 +372,8 @@ class _TaskCreationDialogState extends ConsumerState<TaskCreationDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Add Task for ${widget.initialDate != null ? DateTimeUtils.formatDateForDisplay(widget.initialDate!) : 'Today'}'),
+      title: Text(
+          'Add Task for ${widget.initialDate != null ? DateTimeUtils.formatDateForDisplay(widget.initialDate!) : 'Today'}'),
       content: Form(
         key: _formKey,
         child: Column(
@@ -388,7 +394,7 @@ class _TaskCreationDialogState extends ConsumerState<TaskCreationDialog> {
               autofocus: true,
             ),
             const SizedBox(height: AppSpacing.medium),
-            
+
             // Category selection - simplified for now
             DropdownButtonFormField<String>(
               value: _selectedCategoryId,
@@ -436,7 +442,7 @@ class _TaskCreationDialogState extends ConsumerState<TaskCreationDialog> {
 
     try {
       final taskOps = ref.read(taskOperationsProvider);
-      
+
       await taskOps.createTask(
         title: _titleController.text.trim(),
         categoryId: _selectedCategoryId,
@@ -465,6 +471,6 @@ final upcomingTasksProvider = FutureProvider<List<Task>>((ref) async {
   final repository = ref.watch(taskRepositoryProvider);
   final now = DateTime.now();
   final future = now.add(const Duration(days: 30));
-  
+
   return await repository.getTasksByDateRange(now, future);
 });

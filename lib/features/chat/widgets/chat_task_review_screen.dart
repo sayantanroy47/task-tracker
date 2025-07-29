@@ -10,14 +10,15 @@ import '../../../core/constants/constants.dart';
 /// Screen for reviewing and editing extracted tasks from chat messages
 class ChatTaskReviewScreen extends ConsumerStatefulWidget {
   final SharedContent sharedContent;
-  
+
   const ChatTaskReviewScreen({
     required this.sharedContent,
     super.key,
   });
 
   @override
-  ConsumerState<ChatTaskReviewScreen> createState() => _ChatTaskReviewScreenState();
+  ConsumerState<ChatTaskReviewScreen> createState() =>
+      _ChatTaskReviewScreenState();
 }
 
 class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
@@ -26,14 +27,16 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
     super.initState();
     // Process the shared content when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatIntegrationProvider.notifier).processSharedContent(widget.sharedContent);
+      ref
+          .read(chatIntegrationProvider.notifier)
+          .processSharedContent(widget.sharedContent);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatIntegrationProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Review Extracted Tasks'),
@@ -55,12 +58,12 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
   Widget _buildBody(BuildContext context, ChatIntegrationState state) {
     return switch (state) {
       ChatIntegrationProcessing() => _buildProcessingView(context),
-      ChatIntegrationTasksExtracted(:final extractedTasks) => 
+      ChatIntegrationTasksExtracted(:final extractedTasks) =>
         _buildTasksReview(context, extractedTasks),
       ChatIntegrationNoTasksFound() => _buildNoTasksView(context),
       ChatIntegrationError(:final message) => _buildErrorView(context, message),
       ChatIntegrationCreatingTasks() => _buildCreatingView(context),
-      ChatIntegrationSuccess(:final createdTasks) => 
+      ChatIntegrationSuccess(:final createdTasks) =>
         _buildSuccessView(context, createdTasks),
       _ => _buildIdleView(context),
     };
@@ -88,7 +91,7 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -97,8 +100,8 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
               Text(
                 'Original Message',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -110,14 +113,14 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
                 Text(
                   'From: ${widget.sharedContent.appName}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ],
           ),
         ),
-        
+
         // Extracted tasks list
         Expanded(
           child: ListView.builder(
@@ -133,7 +136,7 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
             },
           ),
         ),
-        
+
         // Bottom actions
         Container(
           padding: const EdgeInsets.all(16),
@@ -148,8 +151,10 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: tasks.isNotEmpty ? () => _confirmAllTasks(context) : null,
-                  child: Text('Create ${tasks.length} Task${tasks.length == 1 ? '' : 's'}'),
+                  onPressed:
+                      tasks.isNotEmpty ? () => _confirmAllTasks(context) : null,
+                  child: Text(
+                      'Create ${tasks.length} Task${tasks.length == 1 ? '' : 's'}'),
                 ),
               ),
             ],
@@ -179,8 +184,8 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
             'We couldn\'t find any tasks in this message.\nTry sharing a message with clear action items.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -212,8 +217,8 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -225,7 +230,8 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
               ),
               const SizedBox(width: 16),
               ElevatedButton(
-                onPressed: () => ref.read(chatIntegrationProvider.notifier)
+                onPressed: () => ref
+                    .read(chatIntegrationProvider.notifier)
                     .processSharedContent(widget.sharedContent),
                 child: const Text('Retry'),
               ),
@@ -290,7 +296,9 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
   }
 
   void _editTask(int index, ExtractedTask updatedTask) {
-    ref.read(chatIntegrationProvider.notifier).editExtractedTask(index, updatedTask);
+    ref
+        .read(chatIntegrationProvider.notifier)
+        .editExtractedTask(index, updatedTask);
   }
 
   void _removeTask(int index) {
@@ -300,7 +308,9 @@ class _ChatTaskReviewScreenState extends ConsumerState<ChatTaskReviewScreen> {
   void _confirmAllTasks(BuildContext context) {
     final state = ref.read(chatIntegrationProvider);
     if (state is ChatIntegrationTasksExtracted) {
-      ref.read(chatIntegrationProvider.notifier).confirmAndCreateTasks(state.extractedTasks);
+      ref
+          .read(chatIntegrationProvider.notifier)
+          .confirmAndCreateTasks(state.extractedTasks);
     }
   }
 }
@@ -381,28 +391,28 @@ class _ExtractedTaskCard extends ConsumerWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Task title
             Text(
               task.extractedTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-            
+
             // Description if available
             if (task.extractedDescription != null) ...[
               const SizedBox(height: 8),
               Text(
                 task.extractedDescription!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
-            
+
             // Date and time if available
             if (task.extractedDate != null || task.extractedTime != null) ...[
               const SizedBox(height: 12),
@@ -417,13 +427,13 @@ class _ExtractedTaskCard extends ConsumerWidget {
                   Text(
                     _formatDateTime(task.extractedDate, task.extractedTime),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                   ),
                 ],
               ),
             ],
-            
+
             // Priority indicator
             if (task.inferredPriority != TaskPriority.medium) ...[
               const SizedBox(height: 8),
@@ -438,25 +448,31 @@ class _ExtractedTaskCard extends ConsumerWidget {
                   Text(
                     task.inferredPriority.displayName,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _getPriorityColor(context, task.inferredPriority),
-                    ),
+                          color:
+                              _getPriorityColor(context, task.inferredPriority),
+                        ),
                   ),
                 ],
               ),
             ],
-            
+
             // Keywords if available
             if (task.keywords.isNotEmpty) ...[
               const SizedBox(height: 12),
               Wrap(
                 spacing: 4,
                 runSpacing: 4,
-                children: task.keywords.map((keyword) => Chip(
-                  label: Text(keyword),
-                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-                  labelStyle: Theme.of(context).textTheme.bodySmall,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                )).toList(),
+                children: task.keywords
+                    .map((keyword) => Chip(
+                          label: Text(keyword),
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          labelStyle: Theme.of(context).textTheme.bodySmall,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ))
+                    .toList(),
               ),
             ],
           ],
@@ -468,12 +484,12 @@ class _ExtractedTaskCard extends ConsumerWidget {
   String _formatDateTime(DateTime? date, TimeOfDay? time) {
     final now = DateTime.now();
     String dateStr = 'No date';
-    
+
     if (date != null) {
       final dateOnly = DateTime(date.year, date.month, date.day);
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));
-      
+
       if (dateOnly == today) {
         dateStr = 'Today';
       } else if (dateOnly == tomorrow) {
@@ -482,7 +498,7 @@ class _ExtractedTaskCard extends ConsumerWidget {
         dateStr = '${date.month}/${date.day}/${date.year}';
       }
     }
-    
+
     if (time != null) {
       final hour = time.hour;
       final minute = time.minute;
@@ -491,7 +507,7 @@ class _ExtractedTaskCard extends ConsumerWidget {
       final minuteStr = minute.toString().padLeft(2, '0');
       dateStr += ' at $displayHour:$minuteStr $period';
     }
-    
+
     return dateStr;
   }
 
@@ -533,7 +549,7 @@ class _ConfidenceBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final confidencePercent = (confidence * 100).round();
     final color = _getConfidenceColor(context, confidence);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -544,9 +560,9 @@ class _ConfidenceBadge extends StatelessWidget {
       child: Text(
         '$confidencePercent%',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
       ),
     );
   }

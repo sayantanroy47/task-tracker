@@ -20,14 +20,14 @@ class DatabaseTestHelper {
   static Future<Map<String, dynamic>> testDatabaseInitialization() async {
     try {
       await initialize();
-      
+
       // Test database exists
       final dbExists = await _databaseService.exists();
-      
+
       // Test default categories
       final categories = await _categoryRepository!.getAllCategories();
       final systemCategories = categories.where((c) => c.isSystem).toList();
-      
+
       return {
         'success': true,
         'database_exists': dbExists,
@@ -47,21 +47,21 @@ class DatabaseTestHelper {
   static Future<Map<String, dynamic>> testTaskOperations() async {
     try {
       await initialize();
-      
+
       // Get a category to use for testing
       final categories = await _categoryRepository!.getAllCategories();
       if (categories.isEmpty) {
         throw Exception('No categories available for testing');
       }
-      
+
       final testCategory = categories.first;
       final now = DateTime.now();
-      
+
       // Create a test task
       final testTask = Task(
         title: 'Test Task',
         description: 'This is a test task created by DatabaseTestHelper',
-        categoryId: testCategory.id!,
+        categoryId: testCategory.id,
         dueDate: now.add(const Duration(days: 1)),
         dueTime: const TimeOfDay(hour: 14, minute: 30),
         priority: Priority.medium,
@@ -69,13 +69,13 @@ class DatabaseTestHelper {
         createdAt: now,
         updatedAt: now,
       );
-      
+
       // Test create task
       final taskId = await _taskRepository!.createTask(testTask);
-      
+
       // Test get task by ID
       final retrievedTask = await _taskRepository!.getTaskById(taskId);
-      
+
       // Test update task
       final updatedTask = retrievedTask!.copyWith(
         title: 'Updated Test Task',
@@ -83,19 +83,19 @@ class DatabaseTestHelper {
         updatedAt: DateTime.now(),
       );
       await _taskRepository!.updateTask(updatedTask);
-      
+
       // Test get all tasks
       final allTasks = await _taskRepository!.getAllTasks();
-      
+
       // Test search tasks
       final searchResults = await _taskRepository!.searchTasks('Updated');
-      
+
       // Test delete task
       await _taskRepository!.deleteTask(taskId);
-      
+
       // Verify deletion
       final deletedTask = await _taskRepository!.getTaskById(taskId);
-      
+
       return {
         'success': true,
         'task_created': taskId > 0,
@@ -117,28 +117,28 @@ class DatabaseTestHelper {
   static Future<Map<String, dynamic>> testNotificationOperations() async {
     try {
       await initialize();
-      
+
       // Create a test task first
       final categories = await _categoryRepository!.getAllCategories();
       if (categories.isEmpty) {
         throw Exception('No categories available for testing');
       }
-      
+
       final testCategory = categories.first;
       final now = DateTime.now();
       final dueDateTime = now.add(const Duration(days: 1));
-      
+
       final testTask = Task(
         title: 'Test Task for Notifications',
-        categoryId: testCategory.id!,
+        categoryId: testCategory.id,
         dueDate: dueDateTime,
         dueTime: const TimeOfDay(hour: 14, minute: 30),
         createdAt: now,
         updatedAt: now,
       );
-      
+
       final taskId = await _taskRepository!.createTask(testTask);
-      
+
       // Create notifications for the task
       final fullDueDateTime = DateTime(
         dueDateTime.year,
@@ -147,23 +147,26 @@ class DatabaseTestHelper {
         14, // hour
         30, // minute
       );
-      
-      final notificationIds = await _notificationRepository!.createNotificationsForTask(
+
+      final notificationIds =
+          await _notificationRepository!.createNotificationsForTask(
         taskId,
         fullDueDateTime,
         [NotificationType.oneDay, NotificationType.oneHour],
       );
-      
+
       // Test get notifications by task
-      final taskNotifications = await _notificationRepository!.getNotificationsByTask(taskId);
-      
+      final taskNotifications =
+          await _notificationRepository!.getNotificationsByTask(taskId);
+
       // Test get all notifications
-      final allNotifications = await _notificationRepository!.getAllNotifications();
-      
+      final allNotifications =
+          await _notificationRepository!.getAllNotifications();
+
       // Clean up
       await _notificationRepository!.deleteNotificationsByTask(taskId);
       await _taskRepository!.deleteTask(taskId);
-      
+
       return {
         'success': true,
         'notifications_created': notificationIds.length,
@@ -181,21 +184,21 @@ class DatabaseTestHelper {
   /// Run comprehensive database tests
   static Future<Map<String, dynamic>> runAllTests() async {
     final results = <String, dynamic>{};
-    
+
     // Test database initialization
     final initTest = await testDatabaseInitialization();
     results['initialization'] = initTest;
-    
+
     if (initTest['success'] == true) {
       // Test task operations
       final taskTest = await testTaskOperations();
       results['task_operations'] = taskTest;
-      
+
       // Test notification operations
       final notificationTest = await testNotificationOperations();
       results['notification_operations'] = notificationTest;
     }
-    
+
     return results;
   }
 

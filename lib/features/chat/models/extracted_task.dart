@@ -34,24 +34,12 @@ class ExtractedTask {
   
   /// Convert to regular task for database storage
   Task toTask({required String categoryId}) {
-    // Combine date and time if both are available
-    DateTime? combinedDateTime;
-    if (extractedDate != null && extractedTime != null) {
-      combinedDateTime = DateTime(
-        extractedDate!.year,
-        extractedDate!.month,
-        extractedDate!.day,
-        extractedTime!.hour,
-        extractedTime!.minute,
-      );
-    }
-    
     return Task.create(
       title: extractedTitle,
       description: extractedDescription,
       categoryId: categoryId,
       dueDate: extractedDate,
-      dueTime: combinedDateTime,
+      dueTime: extractedTime,
       priority: inferredPriority,
       source: source,
       hasReminder: extractedDate != null, // Auto-enable reminder if date is set

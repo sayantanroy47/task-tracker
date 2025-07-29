@@ -5,13 +5,14 @@ import 'package:flutter/semantics.dart';
 /// Comprehensive accessibility service providing WCAG 2.1 AA compliance
 /// Handles screen reader support, keyboard navigation, and accessibility preferences
 class AccessibilityService {
-  static final AccessibilityService _instance = AccessibilityService._internal();
+  static final AccessibilityService _instance =
+      AccessibilityService._internal();
   factory AccessibilityService() => _instance;
   AccessibilityService._internal();
 
   /// Current accessibility preferences
-  AccessibilityPreferences _preferences = AccessibilityPreferences();
-  
+  AccessibilityPreferences _preferences = const AccessibilityPreferences();
+
   /// Callbacks for accessibility state changes
   final List<VoidCallback> _listeners = [];
 
@@ -35,7 +36,8 @@ class AccessibilityService {
   }
 
   /// Update accessibility preferences
-  Future<void> updatePreferences(AccessibilityPreferences newPreferences) async {
+  Future<void> updatePreferences(
+      AccessibilityPreferences newPreferences) async {
     _preferences = newPreferences;
     await _savePreferences();
     _notifyListeners();
@@ -49,27 +51,32 @@ class AccessibilityService {
   /// Check if high contrast is enabled
   bool get isHighContrastEnabled {
     return SemanticsBinding.instance.accessibilityFeatures.highContrast ||
-           _preferences.forceHighContrast;
+        _preferences.forceHighContrast;
   }
 
   /// Check if reduced motion is enabled
   bool get isReducedMotionEnabled {
     return SemanticsBinding.instance.accessibilityFeatures.disableAnimations ||
-           _preferences.reduceMotion;
+        _preferences.reduceMotion;
   }
 
   /// Check if large text is enabled
   bool get isLargeTextEnabled {
     return _preferences.largeText ||
-           MediaQueryData.fromWindow(WidgetsBinding.instance.window).textScaleFactor > 1.3;
+        MediaQueryData.fromView(WidgetsBinding.instance.window)
+                .textScaleFactor >
+            1.3;
   }
 
   /// Get accessible text scale factor
   double get textScaleFactor {
     if (_preferences.largeText) {
-      return (_preferences.textScaleFactor > 1.0) ? _preferences.textScaleFactor : 1.5;
+      return (_preferences.textScaleFactor > 1.0)
+          ? _preferences.textScaleFactor
+          : 1.5;
     }
-    return MediaQueryData.fromWindow(WidgetsBinding.instance.window).textScaleFactor;
+    return MediaQueryData.fromView(WidgetsBinding.instance.window)
+        .textScaleFactor;
   }
 
   /// Get minimum touch target size
@@ -83,7 +90,7 @@ class AccessibilityService {
     bool respectSettings = true,
   }) async {
     if (respectSettings && !_preferences.hapticFeedback) return;
-    
+
     switch (type) {
       case HapticFeedbackType.lightImpact:
         await HapticFeedback.lightImpact();
@@ -159,15 +166,18 @@ class AccessibilityService {
         builder: (context) {
           final hasFocus = focusNode.hasFocus;
           final showFocus = showFocusOnKeyboard ? hasFocus : false;
-          
+
           return Container(
-            decoration: showFocus ? BoxDecoration(
-              border: Border.all(
-                color: focusColor ?? Theme.of(context).colorScheme.primary,
-                width: borderWidth,
-              ),
-              borderRadius: borderRadius ?? BorderRadius.circular(4.0),
-            ) : null,
+            decoration: showFocus
+                ? BoxDecoration(
+                    border: Border.all(
+                      color:
+                          focusColor ?? Theme.of(context).colorScheme.primary,
+                      width: borderWidth,
+                    ),
+                    borderRadius: borderRadius ?? BorderRadius.circular(4.0),
+                  )
+                : null,
             child: child,
           );
         },
@@ -179,7 +189,7 @@ class AccessibilityService {
   Future<void> _loadPreferences() async {
     // In a real app, this would load from SharedPreferences or similar
     // For now, use defaults
-    _preferences = AccessibilityPreferences();
+    _preferences = const AccessibilityPreferences();
   }
 
   /// Save preferences to storage
@@ -190,7 +200,8 @@ class AccessibilityService {
   /// Setup system accessibility callbacks
   void _setupSystemCallbacks() {
     // Listen for system accessibility changes
-    WidgetsBinding.instance.platformDispatcher.onAccessibilityFeaturesChanged = () {
+    WidgetsBinding.instance.platformDispatcher.onAccessibilityFeaturesChanged =
+        () {
       _notifyListeners();
     };
   }
@@ -245,7 +256,8 @@ class AccessibilityPreferences {
       textScaleFactor: textScaleFactor ?? this.textScaleFactor,
       hapticFeedback: hapticFeedback ?? this.hapticFeedback,
       keyboardNavigation: keyboardNavigation ?? this.keyboardNavigation,
-      screenReaderOptimizations: screenReaderOptimizations ?? this.screenReaderOptimizations,
+      screenReaderOptimizations:
+          screenReaderOptimizations ?? this.screenReaderOptimizations,
       verboseDescriptions: verboseDescriptions ?? this.verboseDescriptions,
       soundFeedback: soundFeedback ?? this.soundFeedback,
     );
@@ -265,27 +277,31 @@ enum HapticFeedbackType {
 extension AccessibilityContext on BuildContext {
   /// Get accessibility service instance
   AccessibilityService get accessibility => AccessibilityService();
-  
+
   /// Check if screen reader is enabled
-  bool get isScreenReaderEnabled => AccessibilityService().isScreenReaderEnabled;
-  
+  bool get isScreenReaderEnabled =>
+      AccessibilityService().isScreenReaderEnabled;
+
   /// Check if high contrast is enabled
-  bool get isHighContrastEnabled => AccessibilityService().isHighContrastEnabled;
-  
+  bool get isHighContrastEnabled =>
+      AccessibilityService().isHighContrastEnabled;
+
   /// Check if reduced motion is enabled
-  bool get isReducedMotionEnabled => AccessibilityService().isReducedMotionEnabled;
-  
+  bool get isReducedMotionEnabled =>
+      AccessibilityService().isReducedMotionEnabled;
+
   /// Get text scale factor
   double get accessibilityTextScale => AccessibilityService().textScaleFactor;
-  
+
   /// Get minimum touch target size
   double get minTouchTarget => AccessibilityService().minTouchTargetSize;
-  
+
   /// Provide haptic feedback
-  Future<void> hapticFeedback([HapticFeedbackType type = HapticFeedbackType.lightImpact]) {
+  Future<void> hapticFeedback(
+      [HapticFeedbackType type = HapticFeedbackType.lightImpact]) {
     return AccessibilityService().provideFeedback(type: type);
   }
-  
+
   /// Announce to screen reader
   void announce(String message) {
     AccessibilityService().announce(message);
@@ -352,11 +368,11 @@ class _LiveRegionState extends State<LiveRegion> {
   @override
   void didUpdateWidget(LiveRegion oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    if (widget.announcement != null && 
+
+    if (widget.announcement != null &&
         widget.announcement != _lastAnnouncement) {
       _lastAnnouncement = widget.announcement;
-      
+
       // Delay announcement to avoid conflicts
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) {

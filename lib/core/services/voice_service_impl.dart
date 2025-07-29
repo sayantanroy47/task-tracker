@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import 'voice_service.dart';
@@ -11,23 +10,23 @@ class VoiceServiceImpl implements VoiceService {
   bool _isListening = false;
   double? _lastConfidence;
   String _currentLocale = 'en_US';
-  
+
   // Callbacks for current session
   Function(String)? _onResult;
   Function(String)? _onPartialResult;
   Function(String)? _onError;
-  
+
   @override
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     try {
       _isInitialized = await _speech.initialize(
         onError: _handleError,
         onStatus: _handleStatus,
         debugLogging: false,
       );
-      
+
       if (!_isInitialized) {
         throw Exception('Failed to initialize speech recognition');
       }
@@ -36,7 +35,7 @@ class VoiceServiceImpl implements VoiceService {
       throw Exception('Speech recognition initialization failed: $e');
     }
   }
-  
+
   @override
   Future<bool> isAvailable() async {
     if (!_isInitialized) {
@@ -44,19 +43,19 @@ class VoiceServiceImpl implements VoiceService {
     }
     return _isInitialized && _speech.isAvailable;
   }
-  
+
   @override
   Future<bool> requestPermissions() async {
     final permission = await Permission.microphone.request();
     return permission == PermissionStatus.granted;
   }
-  
+
   @override
   Future<bool> hasPermissions() async {
     final status = await Permission.microphone.status;
     return status == PermissionStatus.granted;
   }
-  
+
   @override
   Future<void> startListening({
     Function(String)? onResult,
@@ -67,7 +66,7 @@ class VoiceServiceImpl implements VoiceService {
     if (!_isInitialized) {
       await initialize();
     }
-    
+
     if (!await hasPermissions()) {
       final granted = await requestPermissions();
       if (!granted) {
@@ -75,16 +74,16 @@ class VoiceServiceImpl implements VoiceService {
         return;
       }
     }
-    
+
     if (_isListening) {
       await stopListening();
     }
-    
+
     // Store callbacks for this session
     _onResult = onResult;
     _onPartialResult = onPartialResult;
     _onError = onError;
-    
+
     try {
       await _speech.listen(
         onResult: _handleSpeechResult,
@@ -96,13 +95,13 @@ class VoiceServiceImpl implements VoiceService {
         listenFor: timeout ?? const Duration(seconds: 30),
         pauseFor: const Duration(seconds: 3),
       );
-      
+
       _isListening = true;
     } catch (e) {
       _onError?.call('Failed to start listening: $e');
     }
   }
-  
+
   @override
   Future<void> stopListening() async {
     if (_isListening) {
@@ -110,7 +109,7 @@ class VoiceServiceImpl implements VoiceService {
       _isListening = false;
     }
   }
-  
+
   @override
   Future<void> cancel() async {
     if (_isListening) {
@@ -118,33 +117,35 @@ class VoiceServiceImpl implements VoiceService {
       _isListening = false;
     }
   }
-  
+
   @override
   bool get isListening => _isListening;
-  
+
   @override
   Future<List<VoiceLocale>> getSupportedLocales() async {
     if (!_isInitialized) {
       await initialize();
     }
-    
+
     try {
       final locales = await _speech.locales();
-      return locales.map((locale) => VoiceLocale(
-        localeId: locale.localeId,
-        name: locale.name,
-      )).toList();
+      return locales
+          .map((locale) => VoiceLocale(
+                localeId: locale.localeId,
+                name: locale.name,
+              ))
+          .toList();
     } catch (e) {
       // Return default locale if fetching fails
       return [const VoiceLocale(localeId: 'en_US', name: 'English (US)')];
     }
   }
-  
+
   @override
   Future<void> setLocale(String localeId) async {
     _currentLocale = localeId;
   }
-  
+
   @override
   Future<VoiceTaskResult> processVoiceInput(String text) async {
     // This will be implemented in the NLP parser
@@ -155,27 +156,27 @@ class VoiceServiceImpl implements VoiceService {
       confidence: _lastConfidence ?? 0.5,
     );
   }
-  
+
   @override
   double? get lastConfidence => _lastConfidence;
-  
+
   // Private helper methods
-  
+
   void _handleSpeechResult(result) {
     _lastConfidence = result.confidence;
-    
+
     if (result.finalResult) {
       _onResult?.call(result.recognizedWords);
     } else {
       _onPartialResult?.call(result.recognizedWords);
     }
   }
-  
+
   void _handleError(error) {
     _isListening = false;
     _onError?.call('Speech recognition error: ${error.errorMsg}');
   }
-  
+
   void _handleStatus(String status) {
     switch (status) {
       case 'listening':

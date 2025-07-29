@@ -1,4 +1,4 @@
-package com.tasktracker.app;
+package com.tasktracker.task_tracker_app;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;

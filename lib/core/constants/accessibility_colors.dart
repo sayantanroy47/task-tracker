@@ -37,15 +37,15 @@ class AccessibilityColors {
     final g = color.green / 255.0;
     final b = color.blue / 255.0;
 
-    double _gammaCorrect(double channel) {
+    double gammaCorrect(double channel) {
       return channel <= 0.03928
           ? channel / 12.92
           : pow((channel + 0.055) / 1.055, 2.4) as double;
     }
 
-    return 0.2126 * _gammaCorrect(r) +
-           0.7152 * _gammaCorrect(g) +
-           0.0722 * _gammaCorrect(b);
+    return 0.2126 * gammaCorrect(r) +
+           0.7152 * gammaCorrect(g) +
+           0.0722 * gammaCorrect(b);
   }
 
   /// Calculate contrast ratio between two colors

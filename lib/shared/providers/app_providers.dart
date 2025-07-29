@@ -6,6 +6,7 @@ import '../../core/services/voice_service_impl.dart';
 import '../../core/services/intent_handler_provider.dart';
 import '../../core/services/notification_preferences_service.dart';
 import '../../features/chat/services/chat_integration_service.dart';
+export '../../features/chat/services/chat_integration_service.dart' show chatIntegrationServiceProvider;
 
 /// Core service providers that form the foundation of dependency injection
 /// These providers are used throughout the app for service access

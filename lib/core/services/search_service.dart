@@ -9,7 +9,7 @@ import '../repositories/repositories.dart';
 class SearchService {
   final TaskRepository _taskRepository;
   final CategoryRepository _categoryRepository;
-  
+
   // Performance optimizations
   final Map<String, SearchCacheEntry> _searchCache = {};
   final Set<String> _searchTermsCache = {};
@@ -43,7 +43,8 @@ class SearchService {
 
   /// Extract search terms from text for autocomplete
   void _extractSearchTerms(String text) {
-    final terms = text.toLowerCase()
+    final terms = text
+        .toLowerCase()
         .replaceAll(RegExp(r'[^\w\s]'), ' ')
         .split(' ')
         .where((term) => term.length > 2)
@@ -76,10 +77,10 @@ class SearchService {
     bool useCache = true,
   }) async {
     final stopwatch = Stopwatch()..start();
-    
+
     // Create cache key
     final cacheKey = _createCacheKey(query, filters, sort, page, pageSize);
-    
+
     // Check cache first
     if (useCache && _searchCache.containsKey(cacheKey)) {
       final cachedEntry = _searchCache[cacheKey]!;
@@ -198,12 +199,14 @@ class SearchService {
 
     // Apply category filter
     if (categoryIds != null && categoryIds.isNotEmpty) {
-      tasks = tasks.where((task) => categoryIds.contains(task.categoryId)).toList();
+      tasks =
+          tasks.where((task) => categoryIds.contains(task.categoryId)).toList();
     }
 
     // Apply priority filter
     if (priorities != null && priorities.isNotEmpty) {
-      tasks = tasks.where((task) => priorities.contains(task.priority)).toList();
+      tasks =
+          tasks.where((task) => priorities.contains(task.priority)).toList();
     }
 
     // Apply source filter
@@ -220,15 +223,15 @@ class SearchService {
     if (startDate != null || endDate != null) {
       tasks = tasks.where((task) {
         if (task.dueDate == null) return false;
-        
+
         if (startDate != null && task.dueDate!.isBefore(startDate)) {
           return false;
         }
-        
+
         if (endDate != null && task.dueDate!.isAfter(endDate)) {
           return false;
         }
-        
+
         return true;
       }).toList();
     }
@@ -312,7 +315,8 @@ class SearchService {
     // Add category suggestions
     final categories = await _categoryRepository.getAllCategories();
     final categorySuggestions = categories
-        .where((category) => category.name.toLowerCase().contains(lowercaseQuery))
+        .where(
+            (category) => category.name.toLowerCase().contains(lowercaseQuery))
         .map((category) => SearchSuggestion(
               type: SearchSuggestionType.category,
               text: 'Category: ${category.name}',
@@ -353,7 +357,8 @@ class SearchService {
           text: 'Pending tasks',
           filterType: TaskFilterType.pending,
         ),
-      if ('high priority'.contains(lowercaseQuery) || 'urgent'.contains(lowercaseQuery))
+      if ('high priority'.contains(lowercaseQuery) ||
+          'urgent'.contains(lowercaseQuery))
         SearchSuggestion(
           type: SearchSuggestionType.filter,
           text: 'High priority tasks',
@@ -637,12 +642,12 @@ class SearchFilters {
 
   bool get isEmpty {
     return categoryIds.isEmpty &&
-           status == null &&
-           priorities.isEmpty &&
-           sources.isEmpty &&
-           dateRange == null &&
-           hasReminder == null &&
-           hasDueDate == null;
+        status == null &&
+        priorities.isEmpty &&
+        sources.isEmpty &&
+        dateRange == null &&
+        hasReminder == null &&
+        hasDueDate == null;
   }
 }
 
@@ -707,7 +712,7 @@ extension SearchServiceHelpers on SearchService {
   List<Task> _applyAdvancedFilters(List<Task> tasks, SearchFilters filters) {
     return tasks.where((task) {
       // Category filter
-      if (filters.categoryIds.isNotEmpty && 
+      if (filters.categoryIds.isNotEmpty &&
           !filters.categoryIds.contains(task.categoryId)) {
         return false;
       }
@@ -728,13 +733,13 @@ extension SearchServiceHelpers on SearchService {
       }
 
       // Priority filter
-      if (filters.priorities.isNotEmpty && 
+      if (filters.priorities.isNotEmpty &&
           !filters.priorities.contains(task.priority)) {
         return false;
       }
 
       // Source filter
-      if (filters.sources.isNotEmpty && 
+      if (filters.sources.isNotEmpty &&
           !filters.sources.contains(task.source)) {
         return false;
       }
@@ -753,7 +758,7 @@ extension SearchServiceHelpers on SearchService {
       }
 
       // Has reminder filter
-      if (filters.hasReminder != null && 
+      if (filters.hasReminder != null &&
           task.hasReminder != filters.hasReminder!) {
         return false;
       }
@@ -800,7 +805,8 @@ extension SearchServiceHelpers on SearchService {
         tasks.sort((a, b) => b.priority.index.compareTo(a.priority.index));
         break;
       case SearchSort.title:
-        tasks.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        tasks.sort(
+            (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
         break;
       case SearchSort.category:
         tasks.sort((a, b) => a.categoryId.compareTo(b.categoryId));
@@ -809,13 +815,15 @@ extension SearchServiceHelpers on SearchService {
   }
 
   /// Generate text highlights for search results
-  Map<String, List<TextHighlight>> _generateHighlights(List<Task> tasks, String query) {
+  Map<String, List<TextHighlight>> _generateHighlights(
+      List<Task> tasks, String query) {
     final highlights = <String, List<TextHighlight>>{};
-    final searchTerms = query.toLowerCase().split(' ').where((s) => s.isNotEmpty).toList();
-    
+    final searchTerms =
+        query.toLowerCase().split(' ').where((s) => s.isNotEmpty).toList();
+
     for (final task in tasks) {
       final taskHighlights = <TextHighlight>[];
-      
+
       // Check title for highlights
       for (final term in searchTerms) {
         final titleLower = task.title.toLowerCase();
@@ -830,7 +838,7 @@ extension SearchServiceHelpers on SearchService {
           index = titleLower.indexOf(term, index + 1);
         }
       }
-      
+
       // Check description for highlights
       if (task.description != null) {
         for (final term in searchTerms) {
@@ -841,30 +849,34 @@ extension SearchServiceHelpers on SearchService {
               field: 'description',
               start: index,
               end: index + term.length,
-              matchedText: task.description!.substring(index, index + term.length),
+              matchedText:
+                  task.description!.substring(index, index + term.length),
             ));
             index = descLower.indexOf(term, index + 1);
           }
         }
       }
-      
+
       if (taskHighlights.isNotEmpty) {
         highlights[task.id] = taskHighlights;
       }
     }
-    
+
     return highlights;
   }
 
   /// Create cache key for search results
-  String _createCacheKey(String? query, SearchFilters? filters, SearchSort sort, int page, int pageSize) {
+  String _createCacheKey(String? query, SearchFilters? filters, SearchSort sort,
+      int page, int pageSize) {
     final parts = <String>[
       query ?? '',
       filters?.categoryIds.join(',') ?? '',
       filters?.status?.name ?? '',
       filters?.priorities.map((p) => p.name).join(',') ?? '',
       filters?.sources.map((s) => s.name).join(',') ?? '',
-      filters?.dateRange != null ? '${filters!.dateRange!.start.millisecondsSinceEpoch}-${filters!.dateRange!.end.millisecondsSinceEpoch}' : '',
+      filters?.dateRange != null
+          ? '${filters!.dateRange!.start.millisecondsSinceEpoch}-${filters.dateRange!.end.millisecondsSinceEpoch}'
+          : '',
       filters?.hasReminder?.toString() ?? '',
       filters?.hasDueDate?.toString() ?? '',
       sort.name,
@@ -881,7 +893,7 @@ extension SearchServiceHelpers on SearchService {
       final oldestKey = _searchCache.keys.first;
       _searchCache.remove(oldestKey);
     }
-    
+
     _searchCache[key] = SearchCacheEntry(
       results: results,
       timestamp: DateTime.now(),
@@ -891,10 +903,10 @@ extension SearchServiceHelpers on SearchService {
   /// Get enhanced autocomplete suggestions
   Future<List<SearchSuggestion>> getEnhancedSuggestions(String input) async {
     if (input.length < 2) return [];
-    
+
     final inputLower = input.toLowerCase();
     final suggestions = <SearchSuggestion>[];
-    
+
     // Add term-based suggestions from cache
     final matchingTerms = _searchTermsCache
         .where((term) => term.startsWith(inputLower))
@@ -904,7 +916,7 @@ extension SearchServiceHelpers on SearchService {
               text: term,
             ));
     suggestions.addAll(matchingTerms);
-    
+
     // Add category suggestions
     try {
       final categories = await _categoryRepository.getAllCategories();
@@ -919,7 +931,7 @@ extension SearchServiceHelpers on SearchService {
     } catch (e) {
       debugPrint('Failed to get category suggestions: $e');
     }
-    
+
     return suggestions.take(10).toList();
   }
 

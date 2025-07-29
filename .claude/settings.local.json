@@ -13,7 +13,24 @@
       "Bash(rm:*)",
       "Bash(cd:*)",
       "Bash(dart run build_runner build:*)",
-      "Bash(/mnt/d/FlutterSDK/flutter/bin/flutter --version)"
+      "Bash(/mnt/d/FlutterSDK/flutter/bin/flutter --version)",
+      "WebFetch(domain:pub.dev)",
+      "Bash(dart analyze:*)",
+      "Bash(/mnt/d/FlutterSDK/flutter/bin/flutter clean)",
+      "Bash(/mnt/d/FlutterSDK/flutter/bin/flutter build apk)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "WebFetch(domain:flutter.dev)",
+      "WebFetch(domain:docs.flutter.dev)",
+      "WebFetch(domain:docs.google.com)",
+      "Bash(/mnt/d/FlutterSDK/flutter/bin/flutter analyze --no-pub)",
+      "Bash(chmod:*)",
+      "Bash(./build_fix.sh:*)",
+      "Bash(sed:*)",
+      "Bash(claude mcp add:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(cmd /c:*)"
     ],
     "deny": []
   }

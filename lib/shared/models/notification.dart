@@ -5,7 +5,7 @@ import 'enums.dart';
 @immutable
 class TaskNotification {
   final int? id;
-  final int taskId;
+  final String taskId;
   final DateTime scheduledTime;
   final NotificationType type;
   final bool sent;
@@ -23,7 +23,7 @@ class TaskNotification {
   /// Create a copy of this notification with optional field updates
   TaskNotification copyWith({
     int? id,
-    int? taskId,
+    String? taskId,
     DateTime? scheduledTime,
     NotificationType? type,
     bool? sent,
@@ -55,7 +55,7 @@ class TaskNotification {
   factory TaskNotification.fromJson(Map<String, dynamic> json) {
     return TaskNotification(
       id: json['id'] as int?,
-      taskId: json['task_id'] as int,
+      taskId: json['task_id']?.toString() ?? '',
       scheduledTime: DateTime.parse(json['scheduled_time'] as String),
       type: NotificationType.fromValue(json['type'] as String),
       sent: (json['sent'] as int) == 1,

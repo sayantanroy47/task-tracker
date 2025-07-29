@@ -59,7 +59,7 @@ class VoiceTaskResult {
   final String taskTitle;
   final String? description;
   final DateTime? dueDate;
-  final TimeOfDay? dueTime;
+  final VoiceTimeOfDay? dueTime;
   final String? category;
   final double confidence;
   final String originalText;
@@ -75,12 +75,12 @@ class VoiceTaskResult {
   });
 }
 
-/// Time of day representation
-class TimeOfDay {
+/// Voice-parsed time representation
+class VoiceTimeOfDay {
   final int hour;
   final int minute;
   
-  const TimeOfDay({
+  const VoiceTimeOfDay({
     required this.hour,
     required this.minute,
   });

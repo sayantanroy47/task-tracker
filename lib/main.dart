@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants/constants.dart';
 import 'core/navigation/navigation.dart';
-import 'features/tasks/task_screen.dart';
 import 'shared/providers/app_providers.dart';
 
 void main() {
@@ -63,35 +62,6 @@ class _AppInitializerState extends ConsumerState<_AppInitializer> {
   }
 }
 
-/// App bootstrap widget that handles initialization and loading states
-class AppBootstrap extends ConsumerStatefulWidget {
-  const AppBootstrap({super.key});
-
-  @override
-  ConsumerState<AppBootstrap> createState() => _AppBootstrapState();
-}
-
-class _AppBootstrapState extends ConsumerState<AppBootstrap> {
-  @override
-  void initState() {
-    super.initState();
-    // Initialize app state on startup
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(appStateProvider.notifier).initialize();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appState = ref.watch(appStateProvider);
-    
-    return switch (appState) {
-      AppStateLoading() => const AppLoadingScreen(),
-      AppStateReady() => const TaskScreen(),
-      AppStateError(:final message) => AppErrorScreen(message: message),
-    };
-  }
-}
 
 /// Loading screen shown during app initialization
 class AppLoadingScreen extends StatelessWidget {

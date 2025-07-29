@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/accessibility_service.dart';
 import '../../../shared/models/task.dart';
 import '../../../shared/models/category.dart';
 import '../../../shared/providers/app_providers.dart';
@@ -14,7 +11,7 @@ import '../utils/date_time_utils.dart';
 
 /// Calendar widget with integrated task display
 /// Shows tasks as indicators on calendar dates with category colors
-/// 
+///
 /// Performance optimizations:
 /// - Uses efficient event loading with caching
 /// - Optimized builders for custom day cells
@@ -39,7 +36,7 @@ class CalendarWidget extends ConsumerWidget {
     final selectedDate = calendarState.selectedDate;
     final focusedDay = calendarState.focusedDay;
     final calendarFormat = calendarState.calendarFormat;
-    
+
     final categoriesAsync = ref.watch(allCategoriesProvider);
     final categories = categoriesAsync.valueOrNull ?? [];
 
@@ -59,20 +56,23 @@ class CalendarWidget extends ConsumerWidget {
         children: [
           // Calendar header with navigation
           _buildCalendarHeader(context, ref, calendarState),
-          
+
           // Calendar widget
           TableCalendar<Task>(
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: focusedDay,
-            selectedDayPredicate: (day) => DateTimeUtils.isSameDay(day, selectedDate),
+            selectedDayPredicate: (day) =>
+                DateTimeUtils.isSameDay(day, selectedDate),
             calendarFormat: calendarFormat,
-            
+
             // Event loader - provides tasks for each day
             eventLoader: showTaskIndicators
-                ? (day) => ref.read(calendarStateProvider.notifier).getTasksForDate(day)
+                ? (day) => ref
+                    .read(calendarStateProvider.notifier)
+                    .getTasksForDate(day)
                 : null,
-            
+
             // Styling
             calendarStyle: _buildCalendarStyle(context),
             headerStyle: const HeaderStyle(
@@ -83,7 +83,7 @@ class CalendarWidget extends ConsumerWidget {
               headerPadding: EdgeInsets.zero,
               titleTextStyle: TextStyle(fontSize: 0), // Hide default header
             ),
-            
+
             // Builders for custom day appearance - optimized with memoization
             calendarBuilders: CalendarBuilders(
               defaultBuilder: (context, day, focusedDay) =>
@@ -92,33 +92,38 @@ class CalendarWidget extends ConsumerWidget {
                   _buildDayCell(context, day, true, false, categories, ref),
               todayBuilder: (context, day, focusedDay) =>
                   _buildDayCell(context, day, false, true, categories, ref),
-              outsideBuilder: (context, day, focusedDay) =>
-                  _buildDayCell(context, day, false, false, categories, ref, isOutside: true),
+              outsideBuilder: (context, day, focusedDay) => _buildDayCell(
+                  context, day, false, false, categories, ref,
+                  isOutside: true),
               markerBuilder: (context, day, tasks) =>
                   _buildTaskMarkers(context, day, tasks, categories),
             ),
-            
+
             // Callbacks
             onDaySelected: (selectedDay, focusedDay) {
               ref.read(calendarStateProvider.notifier).selectDate(selectedDay);
               onDateSelected?.call(selectedDay);
               onDateTapped?.call(selectedDay);
             },
-            
+
             onPageChanged: enableSwipeNavigation
-                ? (focusedDay) => ref.read(calendarStateProvider.notifier).updateFocusedDay(focusedDay)
+                ? (focusedDay) => ref
+                    .read(calendarStateProvider.notifier)
+                    .updateFocusedDay(focusedDay)
                 : null,
-            
+
             onFormatChanged: (format) {
-              ref.read(calendarStateProvider.notifier).updateCalendarFormat(format);
+              ref
+                  .read(calendarStateProvider.notifier)
+                  .updateCalendarFormat(format);
             },
-            
+
             // Gesture configuration
             pageJumpingEnabled: enableSwipeNavigation,
             pageAnimationEnabled: true,
             pageAnimationDuration: const Duration(milliseconds: 300),
           ),
-          
+
           const SizedBox(height: AppSpacing.small),
         ],
       ),
@@ -126,7 +131,8 @@ class CalendarWidget extends ConsumerWidget {
   }
 
   /// Build custom calendar header with navigation controls
-  Widget _buildCalendarHeader(BuildContext context, WidgetRef ref, CalendarState calendarState) {
+  Widget _buildCalendarHeader(
+      BuildContext context, WidgetRef ref, CalendarState calendarState) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.medium),
       decoration: BoxDecoration(
@@ -142,11 +148,12 @@ class CalendarWidget extends ConsumerWidget {
         children: [
           // Previous month button
           IconButton(
-            onPressed: () => ref.read(calendarStateProvider.notifier).previousMonth(),
+            onPressed: () =>
+                ref.read(calendarStateProvider.notifier).previousMonth(),
             icon: const Icon(Icons.chevron_left),
             tooltip: 'Previous month',
           ),
-          
+
           // Month/Year title
           InkWell(
             onTap: () => ref.read(calendarStateProvider.notifier).goToToday(),
@@ -164,10 +171,11 @@ class CalendarWidget extends ConsumerWidget {
               ),
             ),
           ),
-          
+
           // Next month button
           IconButton(
-            onPressed: () => ref.read(calendarStateProvider.notifier).nextMonth(),
+            onPressed: () =>
+                ref.read(calendarStateProvider.notifier).nextMonth(),
             icon: const Icon(Icons.chevron_right),
             tooltip: 'Next month',
           ),
@@ -184,12 +192,12 @@ class CalendarWidget extends ConsumerWidget {
       outsideTextStyle: TextStyle(
         color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
       ),
-      
+
       // Weekend styling
       weekendTextStyle: TextStyle(
         color: Theme.of(context).colorScheme.error,
       ),
-      
+
       // Selected day styling
       selectedDecoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary,
@@ -199,7 +207,7 @@ class CalendarWidget extends ConsumerWidget {
         color: Theme.of(context).colorScheme.onPrimary,
         fontWeight: FontWeight.w600,
       ),
-      
+
       // Today styling
       todayDecoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
@@ -209,12 +217,12 @@ class CalendarWidget extends ConsumerWidget {
         color: Theme.of(context).colorScheme.primary,
         fontWeight: FontWeight.w600,
       ),
-      
+
       // Default day styling
       defaultTextStyle: TextStyle(
         color: Theme.of(context).textTheme.bodyMedium?.color,
       ),
-      
+
       // Marker styling
       markersMaxCount: 3,
       markerDecoration: BoxDecoration(
@@ -222,14 +230,14 @@ class CalendarWidget extends ConsumerWidget {
         shape: BoxShape.circle,
       ),
       markerMargin: const EdgeInsets.symmetric(horizontal: 1),
-      
+
       // Cell configuration
       cellMargin: const EdgeInsets.all(4),
       cellPadding: EdgeInsets.zero,
-      
+
       // Row decoration
       rowDecoration: const BoxDecoration(),
-      
+
       // Table border
       tableBorder: TableBorder.all(
         color: Colors.transparent,
@@ -250,10 +258,10 @@ class CalendarWidget extends ConsumerWidget {
   }) {
     final tasks = ref.read(calendarStateProvider.notifier).getTasksForDate(day);
     final hasEvents = tasks.isNotEmpty;
-    
+
     Color? backgroundColor;
     Color? textColor;
-    
+
     if (isSelected) {
       backgroundColor = Theme.of(context).colorScheme.primary;
       textColor = Theme.of(context).colorScheme.onPrimary;
@@ -261,11 +269,12 @@ class CalendarWidget extends ConsumerWidget {
       backgroundColor = Theme.of(context).colorScheme.primary.withOpacity(0.2);
       textColor = Theme.of(context).colorScheme.primary;
     } else if (isOutside) {
-      textColor = Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3);
+      textColor =
+          Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3);
     } else {
       textColor = Theme.of(context).textTheme.bodyMedium?.color;
     }
-    
+
     return Container(
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
@@ -283,7 +292,8 @@ class CalendarWidget extends ConsumerWidget {
           day.day.toString(),
           style: TextStyle(
             color: textColor,
-            fontWeight: isSelected || isToday ? FontWeight.w600 : FontWeight.normal,
+            fontWeight:
+                isSelected || isToday ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
       ),
@@ -299,22 +309,22 @@ class CalendarWidget extends ConsumerWidget {
     List<Category> categories,
   ) {
     if (tasks.isEmpty) return const SizedBox.shrink();
-    
+
     // Use a more efficient approach to group tasks by category
     final tasksByCategory = <String, _TaskCategoryGroup>{};
     for (final task in tasks) {
       final group = tasksByCategory.putIfAbsent(
-        task.categoryId, 
+        task.categoryId,
         () => _TaskCategoryGroup(categoryId: task.categoryId),
       );
       group.addTask(task);
     }
-    
+
     // Show up to 3 category indicators with best coverage
     final sortedGroups = tasksByCategory.values.toList()
       ..sort((a, b) => b.totalCount.compareTo(a.totalCount));
     final topGroups = sortedGroups.take(3);
-    
+
     return Positioned(
       bottom: 4,
       left: 0,
@@ -326,7 +336,7 @@ class CalendarWidget extends ConsumerWidget {
             (cat) => cat.id == group.categoryId,
             orElse: () => Category.getDefaultCategories().first,
           );
-          
+
           return Container(
             width: 6,
             height: 6,
@@ -346,10 +356,20 @@ class CalendarWidget extends ConsumerWidget {
   /// Format month and year for header display
   String _formatMonthYear(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
-    
+
     return '${months[date.month - 1]} ${date.year}';
   }
 }
@@ -393,7 +413,8 @@ class _TaskCategoryGroup {
 
   int get totalCount => _tasks.length;
   int get completedCount => _completedCount;
-  bool get isAllCompleted => _completedCount == _tasks.length && _tasks.isNotEmpty;
+  bool get isAllCompleted =>
+      _completedCount == _tasks.length && _tasks.isNotEmpty;
   bool get hasIncompleteTasks => _completedCount < _tasks.length;
 }
 

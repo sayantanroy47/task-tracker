@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// App spacing and layout constants following the design system
 /// Provides consistent spacing throughout the app
 class AppSpacing {
@@ -74,13 +76,13 @@ class AppDurations {
 
 /// Animation curve constants for smooth motion
 class AppCurves {
-  static const easeIn = Duration(milliseconds: 100);
-  static const easeOut = Duration(milliseconds: 200);
-  static const easeInOut = Duration(milliseconds: 300);
+  static const easeIn = Curves.easeIn;
+  static const easeOut = Curves.easeOut;
+  static const easeInOut = Curves.easeInOut;
   
   // Material motion curves
-  static const standardCurve = Duration(milliseconds: 300);
-  static const emphasizedCurve = Duration(milliseconds: 500);
+  static const standardCurve = Curves.ease;
+  static const emphasizedCurve = Curves.easeInOutCubicEmphasized;
 }
 
 /// Responsive breakpoints for different screen sizes

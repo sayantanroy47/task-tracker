@@ -10,13 +10,15 @@ class AccessibilitySettingsScreen extends StatefulWidget {
   const AccessibilitySettingsScreen({super.key});
 
   @override
-  State<AccessibilitySettingsScreen> createState() => _AccessibilitySettingsScreenState();
+  State<AccessibilitySettingsScreen> createState() =>
+      _AccessibilitySettingsScreenState();
 }
 
-class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScreen> {
+class _AccessibilitySettingsScreenState
+    extends State<AccessibilitySettingsScreen> {
   late AccessibilityService _accessibilityService;
   late AccessibilityPreferences _preferences;
-  
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +37,7 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Accessibility Settings'),
@@ -58,11 +60,12 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               value: _preferences.forceHighContrast,
               onChanged: (value) {
                 HapticFeedback.selectionClick();
-                _updatePreferences(_preferences.copyWith(forceHighContrast: value));
+                _updatePreferences(
+                    _preferences.copyWith(forceHighContrast: value));
               },
             ),
           ),
-          
+
           _buildSettingCard(
             icon: Icons.text_fields,
             title: 'Large Text',
@@ -75,7 +78,7 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               },
             ),
           ),
-          
+
           if (_preferences.largeText) ...[
             _buildSettingCard(
               icon: Icons.format_size,
@@ -90,20 +93,22 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
                     divisions: 15,
                     label: '${(_preferences.textScaleFactor * 100).round()}%',
                     onChanged: (value) {
-                      _updatePreferences(_preferences.copyWith(textScaleFactor: value));
+                      _updatePreferences(
+                          _preferences.copyWith(textScaleFactor: value));
                     },
                   ),
                   Text(
                     'Sample text at ${(_preferences.textScaleFactor * 100).round()}% scale',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontSize: (theme.textTheme.bodyMedium?.fontSize ?? 14) * _preferences.textScaleFactor,
+                      fontSize: (theme.textTheme.bodyMedium?.fontSize ?? 14) *
+                          _preferences.textScaleFactor,
                     ),
                   ),
                 ],
               ),
             ),
           ],
-          
+
           _buildSettingCard(
             icon: Icons.animation,
             title: 'Reduce Motion',
@@ -116,9 +121,9 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               },
             ),
           ),
-          
+
           const SizedBox(height: AppSpacing.lg),
-          
+
           // Input Accessibility Section
           _buildSectionHeader('Input & Navigation'),
           _buildSettingCard(
@@ -129,11 +134,12 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               value: _preferences.hapticFeedback,
               onChanged: (value) {
                 if (value) HapticFeedback.lightImpact(); // Demo the feedback
-                _updatePreferences(_preferences.copyWith(hapticFeedback: value));
+                _updatePreferences(
+                    _preferences.copyWith(hapticFeedback: value));
               },
             ),
           ),
-          
+
           _buildSettingCard(
             icon: Icons.keyboard,
             title: 'Keyboard Navigation',
@@ -142,11 +148,12 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               value: _preferences.keyboardNavigation,
               onChanged: (value) {
                 HapticFeedback.selectionClick();
-                _updatePreferences(_preferences.copyWith(keyboardNavigation: value));
+                _updatePreferences(
+                    _preferences.copyWith(keyboardNavigation: value));
               },
             ),
           ),
-          
+
           _buildSettingCard(
             icon: Icons.volume_up,
             title: 'Sound Feedback',
@@ -159,9 +166,9 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               },
             ),
           ),
-          
+
           const SizedBox(height: AppSpacing.lg),
-          
+
           // Screen Reader Section
           _buildSectionHeader('Screen Reader'),
           _buildSettingCard(
@@ -172,11 +179,12 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               value: _preferences.screenReaderOptimizations,
               onChanged: (value) {
                 HapticFeedback.selectionClick();
-                _updatePreferences(_preferences.copyWith(screenReaderOptimizations: value));
+                _updatePreferences(
+                    _preferences.copyWith(screenReaderOptimizations: value));
               },
             ),
           ),
-          
+
           _buildSettingCard(
             icon: Icons.description,
             title: 'Verbose Descriptions',
@@ -185,50 +193,51 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               value: _preferences.verboseDescriptions,
               onChanged: (value) {
                 HapticFeedback.selectionClick();
-                _updatePreferences(_preferences.copyWith(verboseDescriptions: value));
+                _updatePreferences(
+                    _preferences.copyWith(verboseDescriptions: value));
               },
             ),
           ),
-          
+
           const SizedBox(height: AppSpacing.lg),
-          
+
           // System Information Section
           _buildSectionHeader('System Information'),
           _buildInfoCard(
             icon: Icons.info,
             title: 'Screen Reader Status',
-            subtitle: _accessibilityService.isScreenReaderEnabled 
+            subtitle: _accessibilityService.isScreenReaderEnabled
                 ? 'Screen reader is active'
                 : 'No screen reader detected',
             status: _accessibilityService.isScreenReaderEnabled,
           ),
-          
+
           _buildInfoCard(
             icon: Icons.contrast,
             title: 'System High Contrast',
-            subtitle: _accessibilityService.isHighContrastEnabled 
+            subtitle: _accessibilityService.isHighContrastEnabled
                 ? 'System high contrast is enabled'
                 : 'System high contrast is disabled',
             status: _accessibilityService.isHighContrastEnabled,
           ),
-          
+
           _buildInfoCard(
             icon: Icons.animation,
             title: 'System Reduced Motion',
-            subtitle: _accessibilityService.isReducedMotionEnabled 
+            subtitle: _accessibilityService.isReducedMotionEnabled
                 ? 'System reduced motion is enabled'
                 : 'System reduced motion is disabled',
             status: _accessibilityService.isReducedMotionEnabled,
           ),
-          
+
           const SizedBox(height: AppSpacing.lg),
-          
+
           // Color Contrast Testing
           _buildSectionHeader('Color Contrast Testing'),
           _buildColorContrastReport(),
-          
+
           const SizedBox(height: AppSpacing.xl),
-          
+
           // Help Section
           _buildSectionHeader('Help & Resources'),
           _buildHelpCard(
@@ -237,14 +246,14 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
             subtitle: 'Learn about all accessibility features in this app',
             onTap: () => _showAccessibilityGuide(context),
           ),
-          
+
           _buildHelpCard(
             icon: Icons.keyboard_alt,
             title: 'Keyboard Shortcuts',
             subtitle: 'View all available keyboard shortcuts',
             onTap: () => _showKeyboardShortcuts(context),
           ),
-          
+
           const SizedBox(height: AppSpacing.xl),
         ],
       ),
@@ -402,14 +411,14 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
 
   Widget _buildColorContrastReport() {
     final reports = AccessibilityColors.validateAppColors();
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'WCAG Compliance Report',
               style: AppTextStyles.titleMedium,
             ),
@@ -422,7 +431,9 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
                   children: [
                     Icon(
                       report.meetsAA ? Icons.check_circle : Icons.warning,
-                      color: report.meetsAA ? AppColors.success : AppColors.warning,
+                      color: report.meetsAA
+                          ? AppColors.success
+                          : AppColors.warning,
                       size: 16,
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -439,7 +450,7 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -467,7 +478,8 @@ class _AccessibilitySettingsScreenState extends State<AccessibilitySettingsScree
               Text('• Voice input with accessibility alternatives'),
               Text('• WCAG 2.1 AA compliant color contrasts'),
               SizedBox(height: AppSpacing.md),
-              Text('All features work with system accessibility settings and can be customized in this screen.'),
+              Text(
+                  'All features work with system accessibility settings and can be customized in this screen.'),
             ],
           ),
         ),

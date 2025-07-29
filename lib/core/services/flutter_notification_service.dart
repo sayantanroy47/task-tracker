@@ -12,7 +12,8 @@ import '../../shared/models/enums.dart';
 /// Flutter Local Notifications implementation of NotificationService
 /// Handles cross-platform local notifications for task reminders
 class FlutterNotificationService implements NotificationService {
-  static final FlutterNotificationService _instance = FlutterNotificationService._internal();
+  static final FlutterNotificationService _instance =
+      FlutterNotificationService._internal();
   factory FlutterNotificationService() => _instance;
   FlutterNotificationService._internal();
 
@@ -35,7 +36,7 @@ class FlutterNotificationService implements NotificationService {
 
     // Initialize timezone data
     tz.initializeTimeZones();
-    
+
     _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
     // Android initialization
@@ -53,21 +54,21 @@ class FlutterNotificationService implements NotificationService {
         DarwinNotificationCategory(
           'task_reminder',
           actions: [
-            const DarwinNotificationAction.plain(
+            DarwinNotificationAction.plain(
               'complete',
               'Complete',
               options: {
                 DarwinNotificationActionOption.foreground,
               },
             ),
-            const DarwinNotificationAction.plain(
+            DarwinNotificationAction.plain(
               'snooze',
               'Snooze',
               options: {
                 DarwinNotificationActionOption.destructive,
               },
             ),
-            const DarwinNotificationAction.plain(
+            DarwinNotificationAction.plain(
               'reschedule',
               'Reschedule',
               options: {
@@ -99,7 +100,7 @@ class FlutterNotificationService implements NotificationService {
   /// Handle notification response (tap or action)
   void _onNotificationResponse(NotificationResponse response) {
     final payload = response.payload;
-    
+
     if (response.actionId != null) {
       // Handle action buttons
       _onNotificationActionCallback?.call(response.actionId!, payload);
@@ -122,12 +123,13 @@ class FlutterNotificationService implements NotificationService {
           );
       return result ?? false;
     } else if (Platform.isAndroid) {
-      final androidImplementation = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
+      final androidImplementation =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
-      
+
       if (androidImplementation != null) {
-        final result = await androidImplementation.requestNotificationsPermission();
+        final result =
+            await androidImplementation.requestNotificationsPermission();
         return result ?? false;
       }
     }
@@ -143,10 +145,10 @@ class FlutterNotificationService implements NotificationService {
           ?.checkPermissions();
       return result?.isEnabled ?? false;
     } else if (Platform.isAndroid) {
-      final androidImplementation = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
+      final androidImplementation =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
-      
+
       if (androidImplementation != null) {
         final result = await androidImplementation.areNotificationsEnabled();
         return result ?? false;
@@ -232,8 +234,9 @@ class FlutterNotificationService implements NotificationService {
 
   @override
   Future<List<PendingNotification>> getPendingNotifications() async {
-    final pendingNotifications = await _notificationsPlugin.pendingNotificationRequests();
-    
+    final pendingNotifications =
+        await _notificationsPlugin.pendingNotificationRequests();
+
     return pendingNotifications.map((notification) {
       return PendingNotification(
         id: notification.id,
@@ -281,7 +284,7 @@ class FlutterNotificationService implements NotificationService {
   /// Get platform-specific notification details with action buttons
   Future<NotificationDetails> _getNotificationDetails() async {
     // Get effective settings considering preferences and quiet hours
-    final effectiveSettings = _preferencesService != null 
+    final effectiveSettings = _preferencesService != null
         ? await _preferencesService!.getEffectiveSettings()
         : const EffectiveNotificationSettings(
             shouldShowNotification: true,
@@ -295,7 +298,8 @@ class FlutterNotificationService implements NotificationService {
     // Convert priority to platform-specific values
     final androidImportance = _getAndroidImportance(effectiveSettings.priority);
     final androidPriority = _getAndroidPriority(effectiveSettings.priority);
-    final iosInterruptionLevel = _getIosInterruptionLevel(effectiveSettings.priority);
+    final iosInterruptionLevel =
+        _getIosInterruptionLevel(effectiveSettings.priority);
 
     // Android notification details with action buttons
     final androidDetails = AndroidNotificationDetails(
@@ -307,8 +311,8 @@ class FlutterNotificationService implements NotificationService {
       enableVibration: effectiveSettings.shouldVibrate,
       playSound: effectiveSettings.shouldPlaySound,
       showWhen: true,
-      visibility: effectiveSettings.showOnLockScreen 
-          ? NotificationVisibility.public 
+      visibility: effectiveSettings.showOnLockScreen
+          ? NotificationVisibility.public
           : NotificationVisibility.private,
       actions: const [
         AndroidNotificationAction(
@@ -400,11 +404,11 @@ class FlutterNotificationService implements NotificationService {
 
     for (int i = 0; i < reminderIntervals.length; i++) {
       final reminderTime = dueDateTime.subtract(reminderIntervals[i]);
-      
+
       // Only schedule if reminder time is in the future
       if (reminderTime.isAfter(DateTime.now())) {
         final notificationId = _generateNotificationId(taskId, i);
-        
+
         final payload = jsonEncode({
           'taskId': taskId,
           'action': 'reminder',
@@ -412,7 +416,7 @@ class FlutterNotificationService implements NotificationService {
         });
 
         final intervalText = _formatInterval(reminderIntervals[i]);
-        
+
         await scheduleNotification(
           id: notificationId,
           title: 'Task Reminder: $title',
@@ -427,7 +431,7 @@ class FlutterNotificationService implements NotificationService {
   /// Cancel all notifications for a specific task
   Future<void> cancelTaskNotifications(String taskId) async {
     final pendingNotifications = await getPendingNotifications();
-    
+
     for (final notification in pendingNotifications) {
       if (notification.payload != null) {
         try {

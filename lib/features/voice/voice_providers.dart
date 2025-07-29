@@ -7,8 +7,11 @@ import '../../shared/providers/providers.dart';
 import 'voice_state.dart';
 import 'voice_controller.dart';
 
-/// Provider for the voice service implementation
-final voiceServiceProvider = Provider<VoiceService>((ref) {
+/// Provider for the voice service implementation (deprecated - use app_providers.dart)
+/// This provider is kept for backward compatibility but should be removed
+/// once all references are updated to use the main app provider
+@Deprecated('Use voiceServiceProvider from app_providers.dart instead')
+final localVoiceServiceProvider = Provider<VoiceService>((ref) {
   return VoiceServiceImpl();
 });
 
@@ -19,7 +22,7 @@ final advancedNlpServiceProvider = Provider<AdvancedNlpService>((ref) {
 
 /// Provider for voice input state management
 final voiceInputProvider = StateNotifierProvider<VoiceInputController, VoiceInputState>((ref) {
-  final voiceService = ref.watch(voiceServiceProvider);
+  final voiceService = ref.watch(localVoiceServiceProvider);
   final taskRepository = ref.watch(taskRepositoryProvider);
   final categoryRepository = ref.watch(categoryRepositoryProvider);
   final advancedNlpService = ref.watch(advancedNlpServiceProvider);
@@ -34,19 +37,19 @@ final voiceInputProvider = StateNotifierProvider<VoiceInputController, VoiceInpu
 
 /// Provider for checking if voice is available on device
 final voiceAvailabilityProvider = FutureProvider<bool>((ref) async {
-  final voiceService = ref.watch(voiceServiceProvider);
+  final voiceService = ref.watch(localVoiceServiceProvider);
   return await voiceService.isAvailable();
 });
 
 /// Provider for checking microphone permissions
 final microphonePermissionProvider = FutureProvider<bool>((ref) async {
-  final voiceService = ref.watch(voiceServiceProvider);
+  final voiceService = ref.watch(localVoiceServiceProvider);
   return await voiceService.hasPermissions();
 });
 
 /// Provider for supported voice locales
 final voiceLocalesProvider = FutureProvider<List<VoiceLocale>>((ref) async {
-  final voiceService = ref.watch(voiceServiceProvider);
+  final voiceService = ref.watch(localVoiceServiceProvider);
   return await voiceService.getSupportedLocales();
 });
 
